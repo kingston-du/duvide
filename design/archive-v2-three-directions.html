@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loqin — three design directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:#0C1015;color:#EDF0F4;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;}
+
+  /* ---------- page chrome ---------- */
+  header{max-width:1200px;margin:0 auto;padding:72px 28px 8px;}
+  header .kicker{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8B93A0;margin:0 0 10px;}
+  header h1{font-size:clamp(32px,5vw,48px);letter-spacing:-.03em;margin:0 0 12px;font-weight:800;}
+  header h1 .q{color:#FFB37E;}
+  header p{color:#9AA3B1;font-size:16px;max-width:680px;margin:0;}
+  nav.sticky{position:sticky;top:0;z-index:100;background:rgba(12,16,21,.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.08);}
+  nav.sticky .inner{max-width:1200px;margin:0 auto;padding:13px 28px;display:flex;gap:10px;}
+  nav.sticky a{color:#EDF0F4;text-decoration:none;font-size:13.5px;font-weight:600;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.14);transition:.2s;}
+  nav.sticky a:hover{border-color:rgba(255,255,255,.4);}
+
+  .dir{padding:76px 28px 96px;max-width:none;}
+  .dir .wrap{max-width:1200px;margin:0 auto;}
+  .dir-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:16px;margin-bottom:14px;}
+  .dir-head .num{font-size:12px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;opacity:.55;}
+  .dir-head h2{font-size:clamp(26px,3.6vw,36px);letter-spacing:-.02em;margin:0;}
+  .dir-head p{margin:0;font-size:15px;max-width:560px;opacity:.72;}
+  .dir-head .tag{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.08em;padding:6px 13px;border-radius:999px;border:1px solid currentColor;opacity:.6;}
+  .concept{display:flex;gap:26px;flex-wrap:wrap;margin:18px 0 40px;padding-top:18px;border-top:1px solid currentColor;opacity:1;font-size:13.5px;}
+  .concept div{flex:1;min-width:180px;opacity:.75;}
+  .concept b{display:block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin-bottom:6px;}
+
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;align-items:start;}
+  @media(max-width:980px){.row{grid-template-columns:1fr;justify-items:center;}}
+  figure{margin:0;display:flex;flex-direction:column;gap:14px;align-items:center;}
+  figcaption{font-size:13px;text-align:center;max-width:290px;opacity:.72;}
+  figcaption b{opacity:1;font-weight:650;}
+
+  /* ---------- phone frame ---------- */
+  .phone{width:300px;height:616px;background:#0B0B0D;border-radius:48px;padding:10px;box-shadow:0 44px 90px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,255,255,.05);flex:0 0 auto;}
+  .screen{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:15px;z-index:40;}
+  .hind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:118px;height:4.5px;border-radius:3px;z-index:40;}
+  .status{position:relative;z-index:35;padding:13px 22px 0;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;letter-spacing:.01em;}
+  .status .r{display:flex;gap:4px;align-items:center;opacity:.92;}
+  .batt{width:22px;height:11px;border:1px solid currentColor;border-radius:3px;position:relative;opacity:.85;}
+  .batt::after{content:"";position:absolute;right:-3px;top:2.5px;width:2px;height:5px;background:currentColor;border-radius:1px;}
+  .inner{position:relative;z-index:30;padding:6px 20px 22px;flex:1;display:flex;flex-direction:column;min-height:0;}
+  .app-top{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;margin:0;}
+  .hero{margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;}
+
+  /* ============================================================
+     01 · ALPINE — photography + frosted glass
+  ============================================================ */
+  .dir.alpine{background:linear-gradient(180deg,#0C1015,#0A0D12);color:#EDF0F4;}
+  .dir.alpine h2{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;font-size:clamp(30px,4vw,42px);}
+  .dir.alpine .num{color:#8B93A0;}
+  .alpine .screen{color:#fff;}
+  .alpine .hind{background:rgba(255,255,255,.4);}
+  .alpine .status{color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.4);}
+  .alpine .s-home::before,.alpine .s-start::before,.alpine .s-run::before{content:"";position:absolute;inset:0;background:center/cover no-repeat;z-index:0;}
+  .alpine .s-home::before{background-image:url(assets/alpine-day.jpg);}
+  .alpine .s-start::before{background-image:url(assets/alpine-day.jpg);filter:blur(12px);transform:scale(1.08);}
+  .alpine .s-run::before{background-image:url(assets/alpine-night.jpg);filter:saturate(.85);}
+  .alpine .s-home::after,.alpine .s-start::after,.alpine .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .alpine .s-home::after{background:linear-gradient(180deg,rgba(7,9,13,.5) 0%,rgba(7,9,13,0) 26%,rgba(7,9,13,0) 52%,rgba(7,9,13,.66) 80%,rgba(7,9,13,.85) 100%);}
+  .alpine .s-start::after{background:rgba(9,11,16,.34);}
+  .alpine .s-run::after{background:linear-gradient(180deg,rgba(5,7,11,.6) 0%,rgba(5,7,11,.35) 50%,rgba(5,7,11,.72) 100%);}
+
+  .alpine .brand{font-family:"Instrument Serif",Georgia,serif;font-size:27px;font-weight:400;letter-spacing:.005em;}
+  .alpine .brand .q{color:#FFB37E;}
+  .alpine .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+  .alpine .hero .eyebrow{color:rgba(255,255,255,.72);}
+  .alpine .headline{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:31px;font-weight:400;line-height:1.12;margin:10px 0 22px;text-shadow:0 1px 24px rgba(0,0,0,.45);}
+  .alpine .lock-btn{width:132px;height:132px;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;font-weight:700;font-size:17px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 22px 55px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.4);}
+  .alpine .lock-btn .nfc{font-size:9px;font-weight:700;letter-spacing:.2em;color:rgba(255,255,255,.62);}
+  .alpine .hint{font-size:12px;color:rgba(255,255,255,.7);margin:18px 0 0;}
+  .alpine .bottom-card{border-radius:22px;background:rgba(14,16,22,.45);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:14px 14px 10px;box-shadow:0 18px 50px rgba(0,0,0,.3);}
+  .alpine .label{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 2px 10px;}
+  .alpine .pchips{display:flex;gap:8px;}
+  .alpine .pchip{flex:1;padding:8px;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.07);display:flex;align-items:center;gap:7px;}
+  .alpine .pchip img{width:22px;height:22px;border-radius:7px;object-fit:cover;}
+  .alpine .pchip .n{font-size:10.5px;font-weight:600;white-space:nowrap;}
+  .alpine .pchip.on{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.22);}
+  .alpine .tabs{display:flex;justify-content:space-around;margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.13);font-size:10.5px;font-weight:600;}
+  .alpine .tabs span{color:rgba(255,255,255,.45);}
+  .alpine .tabs span.on{color:#fff;}
+
+  .alpine .sheet{position:absolute;left:0;right:0;bottom:0;z-index:32;border-radius:26px 26px 0 0;background:rgba(13,15,21,.58);border-top:1px solid rgba(255,255,255,.2);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);padding:14px 20px 24px;}
+  .alpine .grabber{width:38px;height:4.5px;border-radius:3px;background:rgba(255,255,255,.4);margin:0 auto 14px;}
+  .alpine .sheet h3{font-size:17px;font-weight:700;margin:0 0 12px;letter-spacing:-.01em;}
+  .alpine .prow{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:15px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);margin-bottom:8px;}
+  .alpine .prow img{width:34px;height:34px;border-radius:10px;object-fit:cover;}
+  .alpine .prow .pn{font-weight:650;font-size:14px;flex:1;}
+  .alpine .prow .pm{font-size:11.5px;color:rgba(255,255,255,.55);font-weight:600;}
+  .alpine .prow.sel{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.18);}
+  .alpine .go-btn{width:100%;margin-top:8px;border:none;border-radius:16px;background:#fff;color:#101014;font-weight:700;font-size:15.5px;padding:15px;font-family:inherit;cursor:pointer;}
+  .alpine .cap{text-align:center;font-size:11.5px;color:rgba(255,255,255,.62);margin-top:10px;font-weight:600;}
+  .alpine .lock-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);font-size:9.5px;font-weight:700;letter-spacing:.16em;}
+  .alpine .lock-chip i{width:6px;height:6px;border-radius:50%;background:#7DE3A0;box-shadow:0 0 8px rgba(125,227,160,.9);}
+  .alpine .ring-time{font-family:"Instrument Serif",Georgia,serif;font-size:42px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.01em;fill:#fff;text-shadow:0 2px 18px rgba(0,0,0,.5);}
+  .alpine .rs{font-size:9.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:4px;}
+  .alpine .run-title{font-size:16px;font-weight:700;margin:16px 0 0;}
+  .alpine .run-sub{font-size:12.5px;color:rgba(255,255,255,.68);margin:8px 0 14px;}
+  .alpine .allow{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid rgba(125,227,160,.4);background:rgba(125,227,160,.12);font-size:11px;font-weight:650;}
+  .alpine .allow i{width:6px;height:6px;border-radius:50%;background:#7DE3A0;}
+  .alpine .stop-btn{width:100%;border:none;border-radius:16px;background:#fff;color:#101014;font-weight:700;font-size:15px;padding:15px;font-family:inherit;cursor:pointer;}
+  .alpine .soft{display:block;text-align:center;font-size:12.5px;color:rgba(255,255,255,.66);margin-top:12px;font-weight:600;}
+
+  /* ============================================================
+     02 · EDITORIAL — Swiss-print minimal
+  ============================================================ */
+  .dir.editorial{background:#EDEDE9;color:#111113;}
+  .dir.editorial h2{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:-.03em;}
+  .dir.editorial .num{color:#7A7A74;}
+  .dir.editorial .concept,.dir.editorial .dir-head p{color:#3F3F3A;}
+  .editorial .screen{background:#F7F7F4;color:#111113;}
+  .editorial .hind{background:rgba(0,0,0,.3);}
+  .editorial .status{color:#111113;}
+  .editorial .brand{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:21px;letter-spacing:-.02em;}
+  .editorial .brand .q{color:#2F6BFF;}
+  .editorial .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:700;background:#111113;color:#fff;}
+  .editorial .hero{align-items:flex-start;text-align:left;width:100%;}
+  .editorial .hero .eyebrow{color:#8A8A84;}
+  .editorial .display{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:39px;letter-spacing:-.035em;line-height:1.04;margin-top:14px;}
+  .editorial .sub-line{color:#6E6E68;font-size:13px;margin-top:10px;}
+  .editorial .list{margin-top:26px;border-top:1px solid rgba(0,0,0,.12);}
+  .editorial .lrow{display:flex;justify-content:space-between;align-items:center;padding:13px 2px;border-bottom:1px solid rgba(0,0,0,.12);}
+  .editorial .lrow .ln{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:10px;}
+  .editorial .dot{width:7px;height:7px;border-radius:50%;border:1.5px solid #C6C6C0;flex:0 0 auto;}
+  .editorial .lrow.on .dot{background:#2F6BFF;border-color:#2F6BFF;}
+  .editorial .lrow.on .ln{font-weight:700;}
+  .editorial .lrow .lm{font-size:12.5px;color:#8A8A84;font-variant-numeric:tabular-nums;font-weight:500;}
+  .editorial .cta{margin-top:24px;width:100%;border:none;background:#111113;color:#fff;border-radius:16px;padding:17px 20px;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;display:flex;justify-content:space-between;align-items:center;letter-spacing:-.01em;}
+  .editorial .cta .right{font-size:11px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.04em;}
+  .editorial .tabs{display:flex;justify-content:space-around;margin-top:auto;padding-top:12px;border-top:1px solid rgba(0,0,0,.12);font-size:11px;font-weight:600;color:#8A8A84;}
+  .editorial .tabs span{position:relative;}
+  .editorial .tabs span.on{color:#111113;}
+  .editorial .tabs span.on::before{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#2F6BFF;}
+
+  .editorial .sheet{position:absolute;left:0;right:0;bottom:0;z-index:32;border-radius:24px 24px 0 0;background:#FFFFFF;border-top:1px solid rgba(0,0,0,.12);padding:16px 20px 24px;box-shadow:0 -24px 70px rgba(0,0,0,.16);}
+  .editorial .grabber{width:38px;height:4.5px;border-radius:3px;background:#D8D8D2;margin:0 auto 14px;}
+  .editorial .sheet .headrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .editorial .sheet h3{font-family:"Space Grotesk",sans-serif;font-size:18px;font-weight:700;margin:0;letter-spacing:-.02em;}
+  .editorial .sheet .x{font-size:14px;color:#8A8A84;cursor:pointer;font-weight:600;}
+  .editorial .erow{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:12px;}
+  .editorial .erow .num{font-size:11.5px;color:#9C9C96;font-variant-numeric:tabular-nums;font-weight:600;width:24px;}
+  .editorial .erow .en{font-weight:600;font-size:14.5px;flex:1;}
+  .editorial .erow .em{font-size:12.5px;color:#8A8A84;font-variant-numeric:tabular-nums;font-weight:500;}
+  .editorial .erow.sel{background:#F0F0EC;}
+  .editorial .erow.sel .en{font-weight:700;}
+  .editorial .erow.sel .num{color:#111113;}
+  .editorial .erow.sel .en::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#2F6BFF;margin-right:9px;vertical-align:2px;}
+  .editorial .go-btn{width:100%;margin-top:10px;border:none;border-radius:16px;background:#111113;color:#fff;font-weight:700;font-size:15px;padding:15px;font-family:inherit;cursor:pointer;letter-spacing:-.01em;}
+  .editorial .cap{text-align:center;font-size:11.5px;color:#8A8A84;margin-top:11px;font-weight:500;}
+
+  .editorial .s-run .screen{background:#0B0B0C;color:#fff;}
+  .editorial .s-run .status{color:#fff;}
+  .editorial .s-run .hind{background:rgba(255,255,255,.4);}
+  .editorial .s-run .brand{color:#fff;}
+  .editorial .s-run .avatar{background:#fff;color:#0B0B0C;}
+  .editorial .lock-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.3);font-size:9.5px;font-weight:700;letter-spacing:.16em;color:rgba(255,255,255,.85);}
+  .editorial .lock-chip i{width:6px;height:6px;border-radius:50%;background:#2F6BFF;box-shadow:0 0 8px rgba(47,107,255,.9);}
+  .editorial .s-run .hero{width:100%;}
+  .editorial .big-time{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:60px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;}
+  .editorial .big-caps{font-size:9.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:12px;}
+  .editorial .bar{width:100%;height:2px;background:rgba(255,255,255,.16);border-radius:1px;margin-top:30px;overflow:hidden;}
+  .editorial .bar i{display:block;width:66%;height:100%;background:#2F6BFF;}
+  .editorial .stats{display:flex;margin-top:24px;border-top:1px solid rgba(255,255,255,.14);}
+  .editorial .stat{flex:1;padding:15px 0 13px;text-align:center;border-right:1px solid rgba(255,255,255,.14);}
+  .editorial .stat:last-child{border-right:none;}
+  .editorial .stat .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .editorial .stat .k{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.48);margin-top:4px;font-weight:600;}
+  .editorial .stop-btn{width:100%;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:16px;padding:15px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;margin-top:auto;letter-spacing:-.01em;}
+  .editorial .soft{display:block;text-align:center;font-size:12.5px;color:rgba(255,255,255,.55);margin-top:12px;font-weight:600;}
+
+  /* ============================================================
+     03 · ATELIER — warm analog craft
+  ============================================================ */
+  .dir.atelier{background:#E8DFCD;color:#241B10;}
+  .dir.atelier h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-style:italic;letter-spacing:-.01em;}
+  .dir.atelier .num{color:#8A7B63;}
+  .dir.atelier .concept,.dir.atelier .dir-head p{color:#5C4F3C;}
+  .atelier .screen{background:#F3EDE2;color:#241B10;}
+  .atelier .screen::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+  .atelier .hind{background:rgba(36,27,16,.35);}
+  .atelier .status{color:#241B10;}
+  .atelier .contour{position:absolute;left:0;right:0;bottom:0;width:100%;z-index:1;opacity:.8;}
+  .atelier .brand{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:23px;}
+  .atelier .brand .q{color:#9A3B2E;font-style:italic;}
+  .atelier .est{display:block;font-size:8px;letter-spacing:.22em;color:#8A7B63;font-weight:600;margin-top:2px;}
+  .atelier .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:"Fraunces",Georgia,serif;font-style:italic;font-size:15px;border:1.2px solid rgba(36,27,16,.55);}
+  .atelier .hero .eyebrow{color:#8A7B63;}
+  .atelier .headline{font-family:"Fraunces",Georgia,serif;font-style:italic;font-weight:600;font-size:31px;letter-spacing:-.01em;margin:12px 0 24px;}
+  .atelier .headline em{color:#9A3B2E;font-style:italic;}
+  .atelier .seal{width:128px;height:128px;border-radius:50%;background:#241B10;color:#F3EDE2;border:1px solid #241B10;position:relative;font-family:"Fraunces",Georgia,serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 14px 30px rgba(36,27,16,.3), inset 0 0 0 5px #F3EDE2, inset 0 0 0 6px rgba(36,27,16,.3);}
+  .atelier .seal::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(36,27,16,.4);}
+  .atelier .seal .t{font-size:16px;font-weight:600;}
+  .atelier .seal .nfc{font-size:7.5px;letter-spacing:.22em;font-weight:600;opacity:.6;}
+  .atelier .hint{font-size:11.5px;color:#8A7B63;margin-top:22px;}
+  .atelier .tickets{margin-top:0;}
+  .atelier .label{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8A7B63;margin:0 2px 9px;}
+  .atelier .ticket{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#FBF7EF;border:1px solid rgba(36,27,16,.18);border-radius:5px;margin-bottom:9px;position:relative;box-shadow:0 1px 0 rgba(36,27,16,.06);}
+  .atelier .ticket .tl{display:flex;align-items:baseline;gap:8px;}
+  .atelier .ticket .no{font-size:8.5px;font-weight:700;letter-spacing:.14em;color:#8A7B63;}
+  .atelier .ticket .tn{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:14.5px;}
+  .atelier .ticket .tm{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A7B63;}
+  .atelier .ticket.on{border-color:#9A3B2E;}
+  .atelier .ticket.on::after{content:"✓";position:absolute;right:-7px;top:-8px;width:20px;height:20px;border-radius:50%;background:#9A3B2E;color:#F3EDE2;font-size:11px;font-weight:700;display:grid;place-items:center;box-shadow:0 3px 8px rgba(154,59,46,.4);}
+  .atelier .tabs{display:flex;justify-content:space-around;margin-top:auto;padding-top:11px;border-top:1px solid rgba(36,27,16,.22);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8A7B63;}
+  .atelier .tabs span.on{color:#241B10;font-family:"Fraunces",Georgia,serif;font-style:italic;text-transform:none;letter-spacing:0;font-size:12.5px;}
+
+  .atelier .sheet{position:absolute;left:0;right:0;bottom:0;z-index:32;border-radius:22px 22px 0 0;background:#FBF7EF;border-top:3px double rgba(36,27,16,.55);padding:16px 20px 24px;box-shadow:0 -18px 60px rgba(36,27,16,.22);}
+  .atelier .sheet .caps{font-size:8.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#8A7B63;text-align:center;margin:2px 0 4px;}
+  .atelier .sheet h3{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:19px;margin:0 0 13px;text-align:center;}
+  .atelier .trow{display:flex;justify-content:space-between;align-items:center;padding:11px 8px;border-bottom:1px dashed rgba(36,27,16,.28);}
+  .atelier .trow:last-child{border-bottom:none;}
+  .atelier .trow .tl{display:flex;align-items:baseline;gap:9px;}
+  .atelier .trow .no{font-size:8.5px;font-weight:700;letter-spacing:.14em;color:#8A7B63;}
+  .atelier .trow .tn{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:14.5px;}
+  .atelier .trow.sel .tn::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#9A3B2E;margin-left:8px;vertical-align:2px;}
+  .atelier .trow .tm{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A7B63;}
+  .atelier .go-btn{width:100%;margin-top:16px;border:none;border-radius:7px;background:#9A3B2E;color:#F7F1E6;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:16px;padding:14px;cursor:pointer;box-shadow:0 8px 20px rgba(154,59,46,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+  .atelier .cap{text-align:center;font-size:8.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8A7B63;margin-top:12px;}
+
+  .atelier .dial-time{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:34px;font-variant-numeric:tabular-nums;fill:#241B10;}
+  .atelier .rs{font-size:8.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#8A7B63;fill:#8A7B63;margin-top:5px;}
+  .atelier .run-title{font-family:"Fraunces",Georgia,serif;font-style:italic;font-weight:600;font-size:18px;margin:18px 0 0;}
+  .atelier .run-sub{font-size:11.5px;color:#6E5F49;margin:7px 0 13px;}
+  .atelier .allow{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;border:1px solid rgba(36,27,16,.35);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5C4F3C;}
+  .atelier .allow i{width:5px;height:5px;border-radius:50%;background:#3F6B4F;}
+  .atelier .stop-btn{width:100%;border:none;border-radius:7px;background:#241B10;color:#F3EDE2;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:15px;padding:14px;cursor:pointer;margin-top:auto;box-shadow:0 8px 20px rgba(36,27,16,.3);}
+  .atelier .soft{display:block;text-align:center;font-size:8.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8A7B63;margin-top:12px;}
+
+  footer{max-width:1200px;margin:0 auto 90px;padding:0 28px;color:#8B93A0;font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker">Design directions · v2</p>
+  <h1>loq<span class="q">in</span> — three actual directions</h1>
+  <p>Three distinct design languages — different typography, different materials, different layouts. Same three screens (Home · Start · Running), same product decisions: one obvious lock-in action, profiles as a quick switch, manual + NFC start, essentials always reachable.</p>
+</header>
+
+<nav class="sticky"><div class="inner">
+  <a href="#alpine">01 · Alpine</a>
+  <a href="#editorial">02 · Editorial</a>
+  <a href="#atelier">03 · Atelier</a>
+</div></nav>
+
+<!-- ============================================================ 01 ALPINE -->
+<section class="dir alpine" id="alpine">
+  <div class="wrap">
+    <div class="dir-head">
+      <span class="num">Direction 01</span>
+      <h2>Alpine</h2>
+      <p>Immersive photography, frosted glass, a serif display voice. The same landscape in three states — clear when you're free, veiled when starting, dark under a locked session.</p>
+      <span class="tag">PHOTOGRAPHY · GLASS · LIGHT</span>
+    </div>
+    <div class="concept">
+      <div><b>Type</b>Instrument Serif display + SF UI — editorial, calm, expensive.</div>
+      <div><b>Material</b>Full-bleed photography under frosted glass panels.</div>
+      <div><b>Layout</b>Centered hero. One circular gesture. Everything else sits in a glass tray.</div>
+    </div>
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="screen s-home">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Focus session</p>
+              <p class="headline">Ready when<br>you are.</p>
+              <button class="lock-btn">Lock in<span class="nfc">TAP · NFC</span></button>
+              <p class="hint">Or start manually — no tag needed</p>
+            </div>
+            <div class="bottom-card">
+              <p class="label">Profiles</p>
+              <div class="pchips">
+                <div class="pchip on"><img src="assets/forest.jpg" alt=""><span class="n">Deep Focus</span></div>
+                <div class="pchip"><img src="assets/lake.jpg" alt=""><span class="n">Work</span></div>
+                <div class="pchip"><img src="assets/ocean.jpg" alt=""><span class="n">Bedtime</span></div>
+              </div>
+              <div class="tabs"><span class="on">Home</span><span>Sessions</span><span>Insights</span></div>
+            </div>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Home</b> — the scene is clear when you're free. One circular action; profiles live in the glass tray.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-start">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><div class="avatar">K</div></div>
+          </div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <h3>Start a session</h3>
+            <div class="prow sel"><img src="assets/forest.jpg" alt=""><span class="pn">Deep Focus</span><span class="pm">34 apps</span></div>
+            <div class="prow"><img src="assets/lake.jpg" alt=""><span class="pn">Work</span><span class="pm">18 apps</span></div>
+            <div class="prow"><img src="assets/ocean.jpg" alt=""><span class="pn">Bedtime</span><span class="pm">all + web</span></div>
+            <button class="go-btn">Start — Deep Focus</button>
+            <p class="cap">Stop with NFC tag or in-app</p>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Start</b> — the scene softens behind frosted glass. Photo thumbnails make profiles instant to read.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-run">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><span class="lock-chip"><i></i>LOCKED</span></div>
+            <div class="hero">
+              <p class="eyebrow">Session in progress</p>
+              <svg width="192" height="192" viewBox="0 0 192 192">
+                <defs><linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE3B8"/><stop offset="1" stop-color="#FF9E6B"/></linearGradient></defs>
+                <circle cx="96" cy="96" r="74" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7"/>
+                <circle cx="96" cy="96" r="74" fill="none" stroke="url(#gA)" stroke-width="7" stroke-linecap="round" stroke-dasharray="307 465" transform="rotate(-90 96 96)"/>
+                <text x="96" y="104" text-anchor="middle" class="ring-time">1:24:32</text>
+              </svg>
+              <p class="rs">remaining</p>
+              <p class="run-title">Deep Focus</p>
+              <p class="run-sub">34 apps shielded</p>
+              <span class="allow"><i></i>Messages allowed</span>
+            </div>
+            <div class="bottom-card">
+              <button class="stop-btn">Stop with NFC</button>
+              <span class="soft">or hold to stop</span>
+            </div>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Running</b> — night falls on the same scene. The ring glows amber; “Messages allowed” is a permanent reassurance.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 EDITORIAL -->
+<section class="dir editorial" id="editorial">
+  <div class="wrap">
+    <div class="dir-head">
+      <span class="num">Direction 02</span>
+      <h2>Editorial</h2>
+      <p>Swiss-print discipline: hairlines, tabular numerals, one accent. And a signature move — the running screen inverts the whole phone to black. The device itself looks locked.</p>
+      <span class="tag">SWISS · HAIRLINES · INVERSION</span>
+    </div>
+    <div class="concept">
+      <div><b>Type</b>Space Grotesk display + Inter — geometric, confident, engineered.</div>
+      <div><b>Material</b>Paper white, hairline rules, one electric-blue accent.</div>
+      <div><b>Layout</b>Editorial stack: display line, quiet list, full-width action. Locked state = full black.</div>
+    </div>
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="screen s-home">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Focus tool</p>
+              <p class="display">Ready to<br>focus.</p>
+              <p class="sub-line">Pick a profile, then lock in.</p>
+            </div>
+            <div class="list">
+              <div class="lrow on"><span class="ln"><span class="dot"></span>Deep Focus</span><span class="lm">34 apps</span></div>
+              <div class="lrow"><span class="ln"><span class="dot"></span>Work</span><span class="lm">18 apps</span></div>
+              <div class="lrow"><span class="ln"><span class="dot"></span>Bedtime</span><span class="lm">all + web</span></div>
+            </div>
+            <button class="cta"><span>Lock in</span><span class="right">NFC · TAP</span></button>
+            <div class="tabs"><span class="on">Home</span><span>Sessions</span><span>Insights</span></div>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Home</b> — a printed page: display line, hairline list, one black action. Nothing else.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-start">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Focus tool</p>
+              <p class="display">Ready to<br>focus.</p>
+            </div>
+          </div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <div class="headrow"><h3>Start session</h3><span class="x">✕</span></div>
+            <div class="erow sel"><span class="num">01</span><span class="en">Deep Focus</span><span class="em">34 apps</span></div>
+            <div class="erow"><span class="num">02</span><span class="en">Work</span><span class="em">18 apps</span></div>
+            <div class="erow"><span class="num">03</span><span class="en">Bedtime</span><span class="em">all + web</span></div>
+            <button class="go-btn">Start Deep Focus</button>
+            <p class="cap">Stop with NFC tag or in-app</p>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Start</b> — numbered rows, tabular counts, one decisive black button.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-run">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in</div><span class="lock-chip"><i></i>LOCKED</span></div>
+            <div class="hero" style="margin:auto 0 0">
+              <p class="big-time">1:24:32</p>
+              <p class="big-caps">Remaining · Deep Focus</p>
+              <div class="bar"><i></i></div>
+              <div class="stats">
+                <div class="stat"><div class="v">34</div><div class="k">Apps shielded</div></div>
+                <div class="stat"><div class="v">ON</div><div class="k">Messages</div></div>
+                <div class="stat"><div class="v">NFC</div><div class="k">Stop</div></div>
+              </div>
+            </div>
+            <button class="stop-btn">Stop with NFC</button>
+            <span class="soft">or hold to stop</span>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Running</b> — the entire phone inverts to black. Giant tabular clock, a hairline progress bar, three facts. No distractions.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 ATELIER -->
+<section class="dir atelier" id="atelier">
+  <div class="wrap">
+    <div class="dir-head">
+      <span class="num">Direction 03</span>
+      <h2>Atelier</h2>
+      <p>Warm paper, engraved detail, a watch-dial timer. Craft over chrome — the app feels like a fine notebook or a mechanical watch: tactile, personal, unhurried.</p>
+      <span class="tag">ANALOG · PAPER · WARM</span>
+    </div>
+    <div class="concept">
+      <div><b>Type</b>Fraunces serif with small-caps labels — stationery, stamped, human.</div>
+      <div><b>Material</b>Warm paper with grain, hairline rules, oxblood wax-seal accents.</div>
+      <div><b>Layout</b>A seal to press, tickets for profiles, a watch dial while running.</div>
+    </div>
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="screen s-home">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <svg class="contour" viewBox="0 0 300 150" preserveAspectRatio="none">
+            <path d="M0 96 L52 62 L98 84 L142 38 L190 70 L232 44 L300 82 L300 150 L0 150 Z" fill="rgba(36,27,16,.06)"/>
+            <path d="M0 96 L52 62 L98 84 L142 38 L190 70 L232 44 L300 82" fill="none" stroke="rgba(36,27,16,.17)" stroke-width="1.4"/>
+            <path d="M0 118 L60 94 L120 106 L180 76 L240 98 L300 86" fill="none" stroke="rgba(36,27,16,.1)" stroke-width="1.2"/>
+          </svg>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in<span class="est">EST. MMXXV — NO. 01</span></div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Begin a session</p>
+              <p class="headline">Lock in<em>.</em></p>
+              <button class="seal"><span class="t">Lock in</span><span class="nfc">TAP · NFC</span></button>
+              <p class="hint">Or start manually — no tag needed</p>
+            </div>
+            <div class="tickets">
+              <p class="label">Profiles</p>
+              <div class="ticket on"><span class="tl"><span class="no">NO. 1</span><span class="tn">Deep Focus</span></span><span class="tm">34 apps</span></div>
+              <div class="ticket"><span class="tl"><span class="no">NO. 2</span><span class="tn">Work</span></span><span class="tm">18 apps</span></div>
+              <div class="ticket"><span class="tl"><span class="no">NO. 3</span><span class="tn">Bedtime</span></span><span class="tm">all + web</span></div>
+            </div>
+            <div class="tabs"><span class="on">Home</span><span>Sessions</span><span>Insights</span></div>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Home</b> — engraved contour art, a wax-seal press, ticket profiles. Quiet and tactile.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-start">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in<span class="est">EST. MMXXV — NO. 01</span></div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Begin a session</p>
+              <p class="headline">Lock in<em>.</em></p>
+            </div>
+          </div>
+          <div class="sheet">
+            <p class="caps">New focus period</p>
+            <h3>Choose a profile</h3>
+            <div class="trow sel"><span class="tl"><span class="no">NO. 1</span><span class="tn">Deep Focus</span></span><span class="tm">34 apps</span></div>
+            <div class="trow"><span class="tl"><span class="no">NO. 2</span><span class="tn">Work</span></span><span class="tm">18 apps</span></div>
+            <div class="trow"><span class="tl"><span class="no">NO. 3</span><span class="tn">Bedtime</span></span><span class="tm">all + web</span></div>
+            <button class="go-btn">Start</button>
+            <p class="cap">Stop — NFC tag or in-app</p>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Start</b> — a paper slip with dashed rules and an oxblood seal to press.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-run">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="app-top"><div class="brand">lo<span class="q">q</span>in<span class="est">EST. MMXXV — NO. 01</span></div><div class="avatar">K</div></div>
+            <div class="hero">
+              <p class="eyebrow">Session in progress</p>
+              <svg width="192" height="192" viewBox="0 0 192 192">
+                <circle cx="96" cy="96" r="80" fill="none" stroke="rgba(36,27,16,.28)" stroke-width="1.6" stroke-dasharray="1.7 6.67"/>
+                <circle cx="96" cy="96" r="80" fill="none" stroke="#9A3B2E" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="331 503" transform="rotate(-90 96 96)"/>
+                <text x="96" y="98" text-anchor="middle" class="dial-time">1:24:32</text>
+                <text x="96" y="120" text-anchor="middle" class="rs">REMAINING</text>
+              </svg>
+              <p class="run-title">Deep Focus</p>
+              <p class="run-sub">34 apps shielded</p>
+              <span class="allow"><i></i>Messages open</span>
+            </div>
+            <button class="stop-btn">Stop with NFC</button>
+            <span class="soft">Or hold to stop</span>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Running</b> — a mechanical watch dial with sixty ticks; the oxblood arc is the session.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  Still static HTML — nothing is wired to SwiftUI. Pick a direction (or name the moves you want to borrow across them, e.g. “Editorial's inversion + Alpine's photography”), and I'll refine it into the full screen set.
+</footer>
+
+</body>
+</html>

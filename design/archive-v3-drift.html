@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loqin — Drift (refined)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:#0A0D11;color:#EDF0F4;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;}
+
+  header{max-width:1200px;margin:0 auto;padding:72px 28px 8px;}
+  header .kicker{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8B93A0;margin:0 0 10px;}
+  header h1{font-size:clamp(32px,5vw,48px);letter-spacing:-.03em;margin:0 0 12px;font-weight:800;}
+  header h1 .q{color:#FFB37E;}
+  header p{color:#9AA3B1;font-size:16px;max-width:680px;margin:0;}
+
+  .dir{padding:44px 28px 40px;}
+  .dir .wrap{max-width:1200px;margin:0 auto;}
+  .decisions{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin:26px 0 44px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:13.5px;color:#9AA3B1;}
+  @media(max-width:900px){.decisions{grid-template-columns:1fr 1fr;}}
+  .decisions b{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#EDF0F4;margin-bottom:7px;font-weight:700;}
+  .decisions div{padding-right:8px;}
+
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;align-items:start;}
+  @media(max-width:980px){.row{grid-template-columns:1fr;justify-items:center;}}
+  figure{margin:0;display:flex;flex-direction:column;gap:14px;align-items:center;}
+  figcaption{font-size:13px;text-align:center;max-width:290px;color:#9AA3B1;}
+  figcaption b{color:#EDF0F4;font-weight:650;}
+
+  /* ---------- phone frame ---------- */
+  .phone{width:300px;height:616px;background:#0B0B0D;border-radius:48px;padding:10px;box-shadow:0 44px 90px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,255,255,.05);flex:0 0 auto;}
+  .screen{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;display:flex;flex-direction:column;color:#fff;}
+  .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:15px;z-index:40;}
+  .hind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:118px;height:4.5px;border-radius:3px;z-index:40;background:rgba(255,255,255,.4);}
+  .status{position:relative;z-index:35;padding:13px 22px 0;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;letter-spacing:.01em;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.4);}
+  .status .r{display:flex;gap:4px;align-items:center;opacity:.92;}
+  .batt{width:22px;height:11px;border:1px solid currentColor;border-radius:3px;position:relative;opacity:.85;}
+  .batt::after{content:"";position:absolute;right:-3px;top:2.5px;width:2px;height:5px;background:currentColor;border-radius:1px;}
+  .inner{position:relative;z-index:30;padding:6px 22px 24px;flex:1;display:flex;flex-direction:column;min-height:0;}
+  .hero{margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;}
+
+  /* ---------- the shoreline, three states ---------- */
+  .s-home::before,.s-scan::before,.s-run::before{content:"";position:absolute;inset:0;z-index:0;background-image:url(assets/ocean.jpg);background-size:cover;background-position:center 62%;}
+  .s-home::before{filter:saturate(.66) brightness(1.05) contrast(.95);}
+  .s-scan::before{filter:blur(11px) saturate(.66) brightness(.96);transform:scale(1.08);}
+  .s-run::before{filter:brightness(.38) saturate(.55) contrast(1.03);}
+  .s-home::after,.s-scan::after,.s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .s-home::after{background:linear-gradient(180deg, rgba(233,241,248,.44) 0%, rgba(233,241,248,.08) 34%, rgba(6,14,22,0) 56%, rgba(6,14,22,.52) 100%);}
+  .s-scan::after{background:rgba(12,20,28,.3);}
+  .s-run::after{background:linear-gradient(180deg, rgba(4,10,18,.52) 0%, rgba(4,10,18,.3) 45%, rgba(4,10,18,.7) 100%);}
+
+  /* ---------- home ---------- */
+  .profile-pill{align-self:center;margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 17px;border-radius:999px;background:rgba(14,18,24,.32);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13px;font-weight:650;color:#fff;cursor:pointer;}
+  .profile-pill svg{opacity:.75;}
+  .lock-btn{width:136px;height:136px;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;font-weight:700;font-size:17px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 22px 55px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.4);}
+  .lock-btn .nfc{font-size:9px;font-weight:700;letter-spacing:.2em;color:rgba(255,255,255,.62);}
+
+  /* ---------- scan ---------- */
+  .scan{width:170px;height:170px;border-radius:50%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 24px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);}
+  .scan::before{content:"";position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(255,255,255,.3);}
+  .scan::after{content:"";position:absolute;inset:-29px;border-radius:50%;border:1px dashed rgba(255,255,255,.24);}
+  .scan .glyph{opacity:.9;}
+  .scan .t{font-size:16.5px;font-weight:700;letter-spacing:-.01em;}
+  .scan-manual{margin-top:30px;font-size:12px;color:rgba(255,255,255,.72);font-weight:500;}
+  .cancel{margin-top:auto;text-align:center;font-size:12.5px;color:rgba(255,255,255,.72);font-weight:600;cursor:pointer;}
+
+  /* ---------- running ---------- */
+  .ring-time{font-family:"Instrument Serif",Georgia,serif;font-size:42px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.01em;fill:#fff;text-shadow:0 2px 18px rgba(0,0,0,.5);}
+  .profile{font-size:14.5px;font-weight:650;margin:16px 0 0;color:rgba(255,255,255,.94);}
+  .allow{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 12px;border-radius:999px;border:1px solid rgba(125,227,160,.4);background:rgba(125,227,160,.12);font-size:11px;font-weight:650;color:#fff;}
+  .allow i{width:6px;height:6px;border-radius:50%;background:#7DE3A0;box-shadow:0 0 8px rgba(125,227,160,.9);}
+  .stop-btn{width:100%;border:none;border-radius:16px;background:#fff;color:#101014;font-weight:700;font-size:15px;padding:15px;font-family:inherit;cursor:pointer;}
+  .soft{display:block;text-align:center;font-size:12.5px;color:rgba(255,255,255,.66);margin-top:12px;font-weight:600;}
+
+  footer{max-width:1200px;margin:30px auto 90px;padding:0 28px;color:#8B93A0;font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker">Design · v3 — refined</p>
+  <h1>loq<span class="q">in</span> — Drift</h1>
+  <p>The chosen direction, stripped to its bones. No app name, no avatar, no headlines, no tabs, no start sheet — just the shoreline, the profile you've armed, and one gesture: tap → scan → locked.</p>
+</header>
+
+<section class="dir">
+  <div class="wrap">
+    <div class="decisions">
+      <div><b>Less is the point</b>No logo, avatar, headlines, or tab bar. Only state that matters, nothing decorative.</div>
+      <div><b>One gesture</b>The pill cycles your profiles (Deep Focus · Work · Bedtime). Lock in starts immediately — no confirmation sheet.</div>
+      <div><b>Scan → lock</b>Tap, scan the tag, session starts. No tag handy? Hold the button to start manually.</div>
+      <div><b>Reassurance</b>While running, the only facts shown: time left, the profile, and that Messages stays open.</div>
+    </div>
+
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="screen s-home">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="profile-pill">Deep Focus
+              <svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="hero">
+              <button class="lock-btn">Lock in<span class="nfc">TAP · NFC</span></button>
+            </div>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Home — the whole screen.</b> A profile pill with a chevron (cycles Deep Focus / Work / Bedtime) and one glass gesture. Nothing else.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-scan">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="hero">
+              <div class="scan">
+                <svg class="glyph" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>
+                <span class="t">Scan tag</span>
+              </div>
+              <p class="scan-manual">or hold to start manually</p>
+            </div>
+            <a class="cancel">Cancel</a>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Scan</b> — no profile sheet, no confirmation. The pill already chose the profile; the tag just fires it. Hold instead if you don't have the tag.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="screen s-run">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+          <div class="inner">
+            <div class="hero">
+              <svg width="192" height="192" viewBox="0 0 192 192">
+                <defs><linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE3B8"/><stop offset="1" stop-color="#FF9E6B"/></linearGradient></defs>
+                <circle cx="96" cy="96" r="74" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7"/>
+                <circle cx="96" cy="96" r="74" fill="none" stroke="url(#gA)" stroke-width="7" stroke-linecap="round" stroke-dasharray="307 465" transform="rotate(-90 96 96)"/>
+                <text x="96" y="104" text-anchor="middle" class="ring-time">1:24:32</text>
+              </svg>
+              <p class="profile">Deep Focus</p>
+              <span class="allow"><i></i>Messages allowed</span>
+            </div>
+            <button class="stop-btn">Stop with NFC</button>
+            <span class="soft">or hold to stop</span>
+          </div>
+          <div class="hind"></div>
+        </div></div>
+        <figcaption><b>Running</b> — dusk falls on the same shoreline. Time, profile, Messages open, one stop path. Nothing else.</figcaption>
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  Still static HTML — nothing is wired to SwiftUI yet. The beach is a softened tropical shoreline; if you want it calmer still (mist, overcast, dusk palms) or a different accent than warm amber, say the word and I'll tune it before we port to SwiftUI.
+</footer>
+
+</body>
+</html>

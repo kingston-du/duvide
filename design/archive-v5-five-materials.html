@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loqin — five directions, five materials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:#0A0D11;color:#EDF0F4;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;}
+
+  header{max-width:1200px;margin:0 auto;padding:72px 28px 8px;}
+  header .kicker{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8B93A0;margin:0 0 10px;}
+  header h1{font-size:clamp(32px,5vw,48px);letter-spacing:-.03em;margin:0 0 12px;font-weight:800;}
+  header h1 .q{color:#FFB37E;}
+  header p{color:#9AA3B1;font-size:16px;max-width:720px;margin:0;}
+
+  .dir{padding:54px 28px 46px;}
+  .dir .wrap{max-width:1200px;margin:0 auto;}
+  .dir-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:16px;margin-bottom:6px;}
+  .dir-head .num{font-size:12px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#8B93A0;}
+  .dir-head h2{font-size:clamp(24px,3.4vw,32px);letter-spacing:-.02em;margin:0;font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;}
+  .dir-head p{margin:0;font-size:14.5px;color:#9AA3B1;max-width:640px;}
+  .dir-head .tag{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.08em;padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.2);color:#9AA3B1;}
+
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;align-items:start;margin-top:36px;}
+  @media(max-width:980px){.row{grid-template-columns:1fr;justify-items:center;}}
+  figure{margin:0;display:flex;flex-direction:column;gap:14px;align-items:center;}
+  figcaption{font-size:13px;text-align:center;max-width:290px;color:#9AA3B1;}
+  figcaption b{color:#EDF0F4;font-weight:650;}
+
+  /* ---------- phone frame ---------- */
+  .phone{width:300px;height:616px;background:#0B0B0D;border-radius:48px;padding:10px;box-shadow:0 44px 90px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,255,255,.05);flex:0 0 auto;}
+  .screen{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:15px;z-index:40;}
+  .hind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:118px;height:4.5px;border-radius:3px;z-index:40;background:rgba(255,255,255,.4);}
+  .status{position:relative;z-index:35;padding:13px 22px 0;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;letter-spacing:.01em;}
+  .status .r{display:flex;gap:4px;align-items:center;opacity:.92;}
+  .batt{width:22px;height:11px;border:1px solid currentColor;border-radius:3px;position:relative;opacity:.85;}
+  .batt::after{content:"";position:absolute;right:-3px;top:2.5px;width:2px;height:5px;background:currentColor;border-radius:1px;}
+  .inner{position:relative;z-index:30;padding:6px 22px 24px;flex:1;display:flex;flex-direction:column;min-height:0;}
+  .hero{margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;}
+
+  .profile-pill{align-self:center;margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 17px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13px;font-weight:650;cursor:pointer;}
+  .profile-pill svg{opacity:.75;}
+
+  .scan-manual{margin-top:28px;font-size:12px;font-weight:500;}
+  .cancel{margin-top:auto;text-align:center;font-size:12.5px;font-weight:600;cursor:pointer;}
+
+  .profile{font-size:14.5px;font-weight:650;margin:16px 0 0;}
+  .allow{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 12px;border-radius:999px;border:1px solid rgba(125,227,160,.45);background:rgba(125,227,160,.14);font-size:11px;font-weight:650;}
+  .allow i{width:6px;height:6px;border-radius:50%;background:#7DE3A0;box-shadow:0 0 8px rgba(125,227,160,.9);}
+
+  .stopx{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:grid;place-items:center;cursor:pointer;margin-left:auto;margin-top:12px;}
+  .glass{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+
+  /* ---------- gesture (tile) & scan, themed ---------- */
+  .gesture{width:140px;height:140px;border-radius:36px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);box-shadow:0 22px 55px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.4);}
+  .scan-g{width:150px;height:150px;border-radius:40px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font-size:16px;font-weight:700;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.13);box-shadow:0 24px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);}
+  .scan-g::before{content:"";position:absolute;inset:-11px;border-radius:48px;border:1px solid rgba(255,255,255,.3);}
+  .scan-g::after{content:"";position:absolute;inset:-24px;border-radius:58px;border:1px dashed rgba(255,255,255,.24);}
+
+  /* ring */
+  .ring .track{fill:none;stroke:var(--track);stroke-width:6.5;}
+  .ring .prog{fill:none;stroke:var(--accent);stroke-width:6.5;stroke-linecap:round;stroke-dasharray:333 504;}
+  .ring text{font-family:"Instrument Serif",Georgia,serif;font-size:42px;fill:var(--ink);}
+
+  /* ============ theme vars ============ */
+  .d-coast{--ink:#fff;--sub:rgba(255,255,255,.72);--accent:#FF9E6B;--track:rgba(255,255,255,.16);}
+  .d-aurora{--ink:#fff;--sub:rgba(255,255,255,.72);--accent:#7DF5C9;--track:rgba(255,255,255,.16);}
+  .d-ember{--ink:#fff;--sub:rgba(255,255,255,.72);--accent:#FF7A3D;--track:rgba(255,255,255,.18);}
+  .d-void{--ink:#fff;--sub:rgba(255,255,255,.72);--accent:#EAF2FF;--track:rgba(255,255,255,.14);}
+  .d-concrete{--ink:#1A1A1A;--sub:rgba(26,26,26,.72);--accent:#111111;--track:rgba(17,17,17,.16);}
+  .screen{color:var(--ink);}
+  .status{color:var(--ink);text-shadow:0 1px 12px rgba(0,0,0,.4);}
+  .profile-pill{color:var(--ink);}
+  .profile-pill svg{color:var(--ink);}
+  .scan-manual,.cancel{color:var(--sub);}
+  .profile{color:var(--ink);}
+  .allow{color:var(--ink);}
+  .stopx{color:var(--ink);}
+
+  /* material overrides */
+  .d-aurora .gesture,.d-aurora .scan-g{background:#fff;color:#0B0B10;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+  .d-concrete .gesture,.d-concrete .scan-g{background:#111;color:#fff;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 20px 46px rgba(0,0,0,.3);}
+  .d-ember .gesture,.d-ember .scan-g{background:linear-gradient(135deg,#FFB14D,#FF4D6D);color:#2A0F0A;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 22px 54px rgba(255,90,60,.45);}
+  .d-void .gesture,.d-void .scan-g{background:transparent;border:1px solid rgba(255,255,255,.55);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;}
+
+  /* concrete is light — adapt chrome */
+  .d-concrete .status{text-shadow:none;}
+  .d-concrete .hind{background:rgba(17,17,17,.3);}
+  .d-concrete .profile-pill{background:rgba(255,255,255,.6);border-color:rgba(17,17,17,.2);}
+  .d-concrete .stopx{background:rgba(255,255,255,.5);border-color:rgba(17,17,17,.25);}
+  .d-concrete .scan-g::before{border-color:rgba(17,17,17,.3);}
+  .d-concrete .scan-g::after{border-color:rgba(17,17,17,.22);}
+
+  /* ============ backgrounds ============ */
+  /* Coast — lagoon */
+  .d-coast .s-home::before,.d-coast .s-scan::before,.d-coast .s-run::before{content:"";position:absolute;inset:0;z-index:0;background-image:url(assets/lagoon.jpg);background-size:cover;background-position:center;}
+  .d-coast .s-home::before{filter:saturate(.52) brightness(1.07) contrast(.93);}
+  .d-coast .s-scan::before{filter:blur(11px) saturate(.5) brightness(.98);transform:scale(1.08);}
+  .d-coast .s-run::before{filter:brightness(.45) saturate(.4) contrast(1.03);}
+  .d-coast .s-home::after,.d-coast .s-scan::after,.d-coast .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .d-coast .s-home::after{background:linear-gradient(180deg, rgba(240,245,250,.52), rgba(240,245,250,.1) 38%, rgba(6,14,22,0) 56%, rgba(6,14,22,.5) 100%);}
+  .d-coast .s-scan::after{background:rgba(14,22,30,.26);}
+  .d-coast .s-run::after{background:linear-gradient(180deg, rgba(8,16,26,.5), rgba(8,16,26,.32) 45%, rgba(4,10,16,.68) 100%);}
+
+  /* Aurora */
+  .d-aurora .s-home::before,.d-aurora .s-scan::before,.d-aurora .s-run::before{content:"";position:absolute;inset:0;z-index:0;background-image:url(assets/aurora.jpg);background-size:cover;background-position:center;}
+  .d-aurora .s-home::before{filter:saturate(1.05) brightness(.9);}
+  .d-aurora .s-scan::before{filter:blur(11px) saturate(1.0) brightness(.85);transform:scale(1.08);}
+  .d-aurora .s-run::before{filter:brightness(.5) saturate(.8);}
+  .d-aurora .s-home::after,.d-aurora .s-scan::after,.d-aurora .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .d-aurora .s-home::after{background:linear-gradient(180deg, rgba(4,10,20,.42), rgba(4,10,20,.12) 42%, rgba(2,6,14,.6) 100%);}
+  .d-aurora .s-scan::after{background:rgba(4,10,18,.3);}
+  .d-aurora .s-run::after{background:linear-gradient(180deg, rgba(2,6,14,.55), rgba(2,6,14,.32) 45%, rgba(0,2,8,.72) 100%);}
+
+  /* Concrete — light */
+  .d-concrete .s-home::before,.d-concrete .s-scan::before,.d-concrete .s-run::before{content:"";position:absolute;inset:0;z-index:0;background-image:url(assets/concrete.jpg);background-size:cover;background-position:center;}
+  .d-concrete .s-home::before{filter:saturate(.28) brightness(1.1) contrast(.96);}
+  .d-concrete .s-scan::before{filter:blur(10px) saturate(.25) brightness(1.05);transform:scale(1.08);}
+  .d-concrete .s-run::before{filter:saturate(.2) brightness(.97) contrast(1.0);}
+  .d-concrete .s-home::after,.d-concrete .s-scan::after,.d-concrete .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .d-concrete .s-home::after{background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.05) 45%, rgba(10,10,12,.1) 100%);}
+  .d-concrete .s-scan::after{background:rgba(255,255,255,.32);}
+  .d-concrete .s-run::after{background:linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.08) 50%, rgba(20,20,24,.08) 100%);}
+
+  /* Ember — abstract gradient */
+  .d-ember .s-home::before,.d-ember .s-scan::before,.d-ember .s-run::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(120% 82% at 50% 16%, #4A2230 0%, #2A1418 48%, #150A0E 100%);}
+  .d-ember .s-scan::before{filter:blur(14px);}
+  .d-ember .s-run::before{filter:brightness(.55) saturate(.8);}
+  .d-ember .s-home::after,.d-ember .s-scan::after,.d-ember .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .d-ember .s-home::after{background:radial-gradient(90% 60% at 50% 90%, rgba(0,0,0,.4), rgba(0,0,0,0));}
+  .d-ember .s-run::after{background:linear-gradient(180deg, rgba(10,4,6,.4), rgba(10,4,6,.25) 50%, rgba(8,3,4,.6) 100%);}
+
+  /* Void — space */
+  .d-void .s-home::before,.d-void .s-scan::before,.d-void .s-run::before{content:"";position:absolute;inset:0;z-index:0;background-image:url(assets/space.jpg);background-size:cover;background-position:center;}
+  .d-void .s-home::before{filter:saturate(.85) brightness(.85);}
+  .d-void .s-scan::before{filter:blur(11px) saturate(.8) brightness(.8);transform:scale(1.08);}
+  .d-void .s-run::before{filter:brightness(.45) saturate(.6);}
+  .d-void .s-home::after,.d-void .s-scan::after,.d-void .s-run::after{content:"";position:absolute;inset:0;z-index:1;}
+  .d-void .s-home::after{background:linear-gradient(180deg, rgba(2,4,10,.55), rgba(2,4,10,.15) 42%, rgba(0,2,6,.62) 100%);}
+  .d-void .s-scan::after{background:rgba(2,4,10,.34);}
+  .d-void .s-run::after{background:linear-gradient(180deg, rgba(0,2,6,.6), rgba(0,2,6,.34) 45%, rgba(0,1,4,.76) 100%);}
+
+  footer{max-width:1200px;margin:30px auto 90px;padding:0 28px;color:#8B93A0;font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker">Design · v5 — five directions, five materials</p>
+  <h1>loq<span class="q">in</span> — five ways to lock in</h1>
+  <p>Same tile shape you liked, same stripped logic — pill, one gesture, no chrome, no start sheet, stop is a small ✕. What changes is the <b style="color:#EDF0F4">world behind it</b> and the <b style="color:#EDF0F4">material of the tile</b>: glass, solid white, solid ink, a hot gradient, and a bare outline.</p>
+</header>
+
+<!-- 1 COAST -->
+<section class="dir d-coast">
+  <div class="wrap">
+    <div class="dir-head"><span class="num">1</span><h2>Coast — glass</h2><p>A foggy teal shoreline. The tile is frosted glass floating in the mist.</p><span class="tag">FOGGY COAST · GLASS</span></div>
+    <div class="row">
+      <figure><div class="phone"><div class="screen s-home"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><button class="gesture glass">Lock in</button></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Home</b> — glass tile in the fog.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-scan"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><div class="scan-g glass"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>Scan tag</div><p class="scan-manual">or hold to start manually</p></div><a class="cancel">Cancel</a></div><div class="hind"></div></div></div>
+        <figcaption><b>Scan</b> — the tile becomes the scanner.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-run"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="stopx glass"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="hero"><svg class="ring" width="192" height="192" viewBox="0 0 192 192"><rect class="track" x="25" y="25" width="142" height="142" rx="42"/><rect class="prog" x="25" y="25" width="142" height="142" rx="42"/><text x="96" y="103" text-anchor="middle">1:24:32</text></svg><p class="profile">Deep Focus</p><span class="allow"><i></i>Messages allowed</span></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Running</b> — dusk on the same shore; ✕ top-right.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 2 AURORA -->
+<section class="dir d-aurora">
+  <div class="wrap">
+    <div class="dir-head"><span class="num">2</span><h2>Aurora — solid white</h2><p>Northern lights at night. The tile is opaque white — crisp, weighty, unmistakable.</p><span class="tag">AURORA · SOLID WHITE</span></div>
+    <div class="row">
+      <figure><div class="phone"><div class="screen s-home"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><button class="gesture">Lock in</button></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Home</b> — a white tile under the lights.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-scan"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><div class="scan-g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>Scan tag</div><p class="scan-manual">or hold to start manually</p></div><a class="cancel">Cancel</a></div><div class="hind"></div></div></div>
+        <figcaption><b>Scan</b> — white scanner, mint rings.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-run"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="stopx glass"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="hero"><svg class="ring" width="192" height="192" viewBox="0 0 192 192"><rect class="track" x="25" y="25" width="142" height="142" rx="42"/><rect class="prog" x="25" y="25" width="142" height="142" rx="42"/><text x="96" y="103" text-anchor="middle">1:24:32</text></svg><p class="profile">Deep Focus</p><span class="allow"><i></i>Messages allowed</span></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Running</b> — mint progress on the night sky.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 3 CONCRETE -->
+<section class="dir d-concrete">
+  <div class="wrap">
+    <div class="dir-head"><span class="num">3</span><h2>Concrete — solid ink</h2><p>Minimal architecture in soft light — the only bright direction. The tile is solid black ink on pale concrete.</p><span class="tag">ARCHITECTURE · SOLID INK</span></div>
+    <div class="row">
+      <figure><div class="phone"><div class="screen s-home"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><button class="gesture">Lock in</button></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Home</b> — black ink tile on pale concrete.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-scan"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><div class="scan-g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>Scan tag</div><p class="scan-manual">or hold to start manually</p></div><a class="cancel">Cancel</a></div><div class="hind"></div></div></div>
+        <figcaption><b>Scan</b> — ink scanner, hairline rings.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-run"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="stopx"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="hero"><svg class="ring" width="192" height="192" viewBox="0 0 192 192"><rect class="track" x="25" y="25" width="142" height="142" rx="42"/><rect class="prog" x="25" y="25" width="142" height="142" rx="42"/><text x="96" y="103" text-anchor="middle">1:24:32</text></svg><p class="profile">Deep Focus</p><span class="allow"><i></i>Messages allowed</span></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Running</b> — monochrome throughout.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 4 EMBER -->
+<section class="dir d-ember">
+  <div class="wrap">
+    <div class="dir-head"><span class="num">4</span><h2>Ember — gradient</h2><p>No photo at all — a warm abstract glow. The tile is a hot orange-to-rose gradient, the one loud thing in the room.</p><span class="tag">ABSTRACT · GRADIENT</span></div>
+    <div class="row">
+      <figure><div class="phone"><div class="screen s-home"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><button class="gesture">Lock in</button></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Home</b> — a glowing tile in the ember.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-scan"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><div class="scan-g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>Scan tag</div><p class="scan-manual">or hold to start manually</p></div><a class="cancel">Cancel</a></div><div class="hind"></div></div></div>
+        <figcaption><b>Scan</b> — the gradient tile scans.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-run"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="stopx glass"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="hero"><svg class="ring" width="192" height="192" viewBox="0 0 192 192"><rect class="track" x="25" y="25" width="142" height="142" rx="42"/><rect class="prog" x="25" y="25" width="142" height="142" rx="42"/><text x="96" y="103" text-anchor="middle">1:24:32</text></svg><p class="profile">Deep Focus</p><span class="allow"><i></i>Messages allowed</span></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Running</b> — orange progress over the glow.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 5 VOID -->
+<section class="dir d-void">
+  <div class="wrap">
+    <div class="dir-head"><span class="num">5</span><h2>Void — ghost</h2><p>Deep space, near black. The tile is just an outline — a hairline rectangle floating in the void. The quietest option.</p><span class="tag">SPACE · GHOST OUTLINE</span></div>
+    <div class="row">
+      <figure><div class="phone"><div class="screen s-home"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><button class="gesture">Lock in</button></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Home</b> — a bare outline in the void.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-scan"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="profile-pill">Deep Focus<svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="hero"><div class="scan-g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 8.2a11 11 0 0 1 0 7.6"/><path d="M10.6 5.4a15.5 15.5 0 0 1 0 13.2"/><path d="M14.2 2.6a20 20 0 0 1 0 18.8"/></svg>Scan tag</div><p class="scan-manual">or hold to start manually</p></div><a class="cancel">Cancel</a></div><div class="hind"></div></div></div>
+        <figcaption><b>Scan</b> — outline scanner.</figcaption></figure>
+      <figure><div class="phone"><div class="screen s-run"><div class="island"></div><div class="status"><span>9:41</span><span class="r">5G <span class="batt"></span></span></div>
+        <div class="inner"><div class="stopx glass"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="hero"><svg class="ring" width="192" height="192" viewBox="0 0 192 192"><rect class="track" x="25" y="25" width="142" height="142" rx="42"/><rect class="prog" x="25" y="25" width="142" height="142" rx="42"/><text x="96" y="103" text-anchor="middle">1:24:32</text></svg><p class="profile">Deep Focus</p><span class="allow"><i></i>Messages allowed</span></div></div><div class="hind"></div></div></div>
+        <figcaption><b>Running</b> — ice-white progress in the dark.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Still static HTML — nothing wired to SwiftUI yet. Mix freely: “Ember's tile on Aurora's sky,” “Concrete but in dark mode,” “Void with the amber ring back.” Archives: <code>archive-v3-drift.html</code>, <code>archive-v4-three-ways.html</code>.
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+import SwiftData
+import SwiftUI
+
+class NFCTimerBlockingStrategy: BlockingStrategy {
+  static var id: String = "NFCTimerBlockingStrategy"
+
+  var name: String = "NFC + Timer"
+  var description: String =
+    "Choose how long blocking should last. To stop early, scan any NFC tag. Use Strict Unlocks if you want only selected tags to work."
+  var iconAssetName: String = "NFC+TimerSticker"
+  var color: Color = .mint
+  var pickerCategory: BlockingStrategyPickerCategory = .timers
+
+  var usesNFC: Bool = true
+  var hasTimer: Bool = true
+  var entryGesture: BlockingStrategyEntryGesture = .timer
+
+  var onSessionCreation: ((SessionStatus) -> Void)?
+  var onErrorMessage: ((String) -> Void)?
+
+  private let nfcScanner: NFCScannerUtil = NFCScannerUtil()
+  private let appBlocker: AppBlockerUtil = AppBlockerUtil()
+
+  func getIdentifier() -> String {
+    return NFCTimerBlockingStrategy.id
+  }
+
+  func startBlocking(
+    context: ModelContext,
+    profile: BlockedProfiles,
+    forceStart: Bool?
+  ) -> (any View)? {
+    if !profile.shouldAskForStartSettings {
+      startTimerSession(
+        context: context,
+        profile: profile,
+        forceStart: forceStart ?? false
+      )
+      return nil
+    }
+
+    return TimerDurationView(
+      profileName: profile.name,
+      initialConfiguration: StrategyTimerData.decode(profile.strategyData),
+      onDurationSelected: { duration in
+        if let strategyTimerData = StrategyTimerData.toData(from: duration) {
+          // Store the timer data so that its selected for the next time the profile is started
+          // This is also useful if the profile is started from the background like a shortcut or intent
+          profile.strategyData = strategyTimerData
+          profile.updatedAt = Date()
+          BlockedProfiles.updateSnapshot(for: profile)
+          try? context.save()
+        }
+
+        self.startTimerSession(
+          context: context,
+          profile: profile,
+          forceStart: forceStart ?? false
+        )
+      }
+    )
+  }
+
+  private func startTimerSession(
+    context: ModelContext,
+    profile: BlockedProfiles,
+    forceStart: Bool
+  ) {
+    let activeSession = BlockedProfileSession.createSession(
+      in: context,
+      withTag: Self.id,
+      withProfile: profile,
+      forceStart: forceStart
+    )
+
+    DeviceActivityCenterUtil.startStrategyTimerActivity(for: profile)
+
+    onSessionCreation?(.started(activeSession))
+  }
+
+  func stopBlocking(
+    context: ModelContext,
+    session: BlockedProfileSession
+  ) -> (any View)? {
+    nfcScanner.onTagScanned = { tag in
+      let tag = tag.url ?? tag.id
+
+      if session.blockedProfile.hasPhysicalUnblockItem(ofType: .nfc)
+        && !session.blockedProfile.canUnblock(withCode: tag, type: .nfc)
+      {
+        self.onErrorMessage?(
+          "This tag isn't one of the unlock tags added to this profile."
+        )
+        return
+      }
+
+      session.endSession()
+      try? context.save()
+      self.appBlocker.deactivateRestrictions()
+
+      self.onSessionCreation?(.ended(session.blockedProfile))
+    }
+
+    nfcScanner.scan(profileName: session.blockedProfile.name, verb: "exit")
+
+    return nil
+  }
+}

@@ -1,0 +1,341 @@
+<title>loqin polish pass</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --void:#04090d; --canvas:#080e13; --panel:#11181d; --panel-hi:#161f26;
+    --accent:#72b3dd; --accent-deep:#4c83c0; --ink:#070e13;
+    --text:#f0f4f6; --text-2:rgba(255,255,255,.72); --text-3:rgba(255,255,255,.5);
+    --hair:rgba(255,255,255,.09); --danger:#e0574a;
+    --page-bg:#020508; --card-bg:#0a1015; --card-line:rgba(255,255,255,.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page-bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:56px 28px 120px;
+  }
+  .intro{max-width:640px; margin:0 auto 64px;}
+  .kicker{
+    font:600 11px/1 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 14px;
+  }
+  h1{font-size:30px; font-weight:650; letter-spacing:-.01em; margin:0 0 12px; text-wrap:balance;}
+  .intro p{font-size:15px; line-height:1.6; color:var(--text-3); margin:0; max-width:56ch;}
+
+  .sections{max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:88px;}
+  section{scroll-margin-top:40px;}
+  .section-head{display:flex; align-items:baseline; gap:14px; margin-bottom:26px; flex-wrap:wrap;}
+  .section-num{font:600 11px/1 ui-monospace,"SF Mono",Menlo,monospace; color:var(--text-3); letter-spacing:.06em;}
+  .section-head h2{font-size:19px; font-weight:650; margin:0; letter-spacing:-.01em;}
+  .section-head p{font-size:13.5px; color:var(--text-3); margin:0; line-height:1.5;}
+
+  .frames{display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;}
+  figure{margin:0; display:flex; flex-direction:column; gap:12px; align-items:center;}
+  figcaption{
+    font:600 10.5px/1 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--text-3); text-align:center; max-width:220px;
+  }
+
+  /* ---- phone frame ---- */
+  .phone{
+    width:236px; height:490px; border-radius:38px; padding:8px;
+    background:linear-gradient(160deg,#1c242b,#05090c);
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .screen{
+    width:100%; height:100%; border-radius:32px; overflow:hidden; position:relative;
+    background:var(--canvas);
+  }
+  .island{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width:78px; height:22px; border-radius:14px; background:#000; z-index:5;
+  }
+
+  /* generic world */
+  .world{position:absolute; inset:0;}
+  .world.aura{background:radial-gradient(circle at 50% 40%, #16222c 0%, #0a1319 42%, #04090c 100%);}
+  .world.cobalt{background:radial-gradient(circle at 30% 20%, #2947c9 0%, #17285e 55%, #0a1230 100%);}
+  .world.redline{background:radial-gradient(circle at 50% 55%, #23140f 0%, #150c0a 60%, #0c0808 100%);}
+  .world.horizon{background:linear-gradient(180deg,#241a33 0%, #3a2440 30%, #6b3f3a 55%, #0d0a12 100%);}
+
+  .orb{
+    width:64px; height:64px; border-radius:50%; margin:0 auto;
+    background:radial-gradient(circle at 38% 34%, #eaf4ff 0%, var(--accent) 40%, rgba(114,179,221,.05) 72%);
+    box-shadow:0 0 40px 6px rgba(114,179,221,.35);
+  }
+  .orb.sm{width:20px; height:20px; box-shadow:0 0 14px 2px rgba(114,179,221,.55);}
+
+  .micro{font:600 10px/1 -apple-system,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3);}
+  .micro.accent{color:var(--accent);}
+  .micro.danger{color:var(--danger); opacity:.85;}
+
+  /* --- Live Activity --- */
+  .la-lock{
+    position:absolute; left:14px; right:14px; top:150px;
+    background:#101418; border-radius:22px; padding:16px 16px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    box-shadow:0 12px 30px rgba(0,0,0,.5);
+  }
+  .la-left{display:flex; align-items:center; gap:10px;}
+  .la-name{font-size:13px; font-weight:600; color:var(--text);}
+  .la-time{
+    font:650 21px/1 ui-monospace,"SF Mono",Menlo,monospace; color:var(--accent);
+    font-variant-numeric:tabular-nums;
+  }
+  .la-track{position:absolute; left:16px; right:16px; bottom:9px; height:2px; border-radius:2px; background:rgba(255,255,255,.12); overflow:hidden;}
+  .la-track i{display:block; width:38%; height:100%; background:var(--accent);}
+
+  .island-expanded{
+    position:absolute; top:8px; left:10px; right:10px; height:70px; border-radius:26px;
+    background:#0b0f13; display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px; box-shadow:0 10px 24px rgba(0,0,0,.5);
+  }
+  .island-expanded .la-time{font-size:19px;}
+
+  /* --- Shield --- */
+  .shield-icon{
+    width:60px;height:60px;border-radius:50%;margin:0 auto 18px;
+    background:radial-gradient(circle at 38% 34%, #d8ebfb 0%, var(--accent) 45%, rgba(114,179,221,.04) 74%);
+    box-shadow:0 0 34px 4px rgba(114,179,221,.3);
+  }
+  .shield-title{font-size:19px; font-weight:650; text-align:center;}
+  .shield-sub{font-size:13px; color:var(--text-2); text-align:center; margin-top:6px;}
+  .shield-btn{
+    margin:26px 28px 0; padding:13px; border-radius:13px; text-align:center;
+    background:rgba(114,179,221,.14); border:1px solid rgba(114,179,221,.3);
+    font-size:14px; font-weight:600; color:var(--text);
+  }
+
+  /* --- exit cluster --- */
+  .exit-x{
+    position:absolute; top:34px; right:16px; width:30px; height:30px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center;
+    font-size:13px; color:var(--text); transform:rotate(45deg);
+  }
+  .stopwatch{font:650 40px/1 ui-monospace,"SF Mono",Menlo,monospace; font-variant-numeric:tabular-nums;}
+  .exit-stack{display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:22px;}
+  .exit-row{font-size:14px; font-weight:600; display:flex; align-items:center; gap:7px;}
+
+  /* --- steps --- */
+  .step-dots{display:flex; gap:6px; justify-content:center; margin-top:14px;}
+  .step-dots i{width:20px; height:2px; border-radius:2px; background:var(--hair);}
+  .step-dots i.on{background:var(--accent);}
+  .step-title{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); text-align:center; margin-top:20px;}
+  .step-name{font-size:24px; font-weight:600; text-align:center; margin-top:10px; color:var(--text-3);}
+  .step-worlds{display:flex; gap:8px; justify-content:center; margin-top:22px;}
+  .swatch-world{width:38px; height:38px; border-radius:9px; border:1.5px solid transparent;}
+  .swatch-world.sel{border-color:var(--accent);}
+  .step-list{display:flex; flex-direction:column; gap:16px; margin-top:26px; padding:0 22px;}
+  .step-list .r{display:flex; flex-direction:column; gap:3px;}
+  .step-list .r b{font-size:16px; font-weight:600;}
+  .step-list .r span{font-size:11.5px; color:var(--text-3);}
+  .step-list .r.sel b{color:var(--accent);}
+
+  .legend{max-width:1180px; margin:80px auto 0; padding-top:32px; border-top:1px solid var(--card-line);
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:24px;}
+  .legend div b{display:block; font-size:12.5px; font-weight:650; margin-bottom:4px;}
+  .legend div span{font-size:12.5px; color:var(--text-3); line-height:1.5;}
+</style>
+
+<div class="intro">
+  <p class="kicker">loqin · design preview</p>
+  <h1>The four surfaces getting rebuilt</h1>
+  <p>
+    Live mockups of the riskiest changes in the polish pass — the two that render outside the
+    app, plus the exit cluster and the new create-profile flow. Everything else in the plan
+    (spacing, the wheel-scroll fix, insights, motion) doesn't need a picture to sign off on.
+  </p>
+</div>
+
+<div class="sections">
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>Live Activity</h2>
+      <p>— themed by the running profile's world instead of one hardcoded look.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura"></div>
+          <div class="la-lock">
+            <div class="la-left">
+              <div class="orb sm"></div>
+              <div>
+                <div class="micro">deep flow</div>
+                <div style="height:4px"></div>
+              </div>
+            </div>
+            <div class="la-time">42:07</div>
+          </div>
+        </div></div>
+        <figcaption>Lock screen — Aura</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world cobalt"></div>
+          <div class="la-lock" style="background:#0f1730;">
+            <div class="la-left">
+              <div class="orb sm" style="background:radial-gradient(circle at 38% 34%,#eef2ff 0%,#3a5be0 45%,rgba(58,91,224,.05) 74%); box-shadow:0 0 14px 2px rgba(58,91,224,.6);"></div>
+              <div class="micro">study block</div>
+            </div>
+            <div class="la-time" style="color:#7d9bff;">18:42</div>
+          </div>
+          <div class="la-track" style="bottom:60px;"><i style="background:#7d9bff; width:64%;"></i></div>
+        </div></div>
+        <figcaption>Timer profile — accent hairline for remaining time</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world redline"></div>
+          <div class="island-expanded">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <div class="orb sm" style="background:radial-gradient(circle at 38% 34%,#ffe7e0 0%,#e03a24 45%,rgba(224,58,36,.04) 74%); box-shadow:0 0 14px 2px rgba(224,58,36,.55);"></div>
+              <div class="micro">redline</div>
+            </div>
+            <div class="la-time" style="color:#ef6a52;">1:04:12</div>
+          </div>
+          <div class="island"></div>
+        </div></div>
+        <figcaption>Dynamic Island, expanded — Redline</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>The shield</h2>
+      <p>— what you see opening a blocked app, now aware of which world you're in.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura"></div>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:0 26px;">
+            <div class="shield-icon"></div>
+            <div class="shield-title">instagram</div>
+            <div class="shield-sub">deep flow · 42m in</div>
+            <div class="shield-btn">back</div>
+          </div>
+        </div></div>
+        <figcaption>Aura profile — surface + accent match the world</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world redline"></div>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:0 26px;">
+            <div class="shield-icon" style="background:radial-gradient(circle at 38% 34%,#ffe7e0 0%,#e03a24 45%,rgba(224,58,36,.04) 74%); box-shadow:0 0 34px 4px rgba(224,58,36,.28);"></div>
+            <div class="shield-title">tiktok</div>
+            <div class="shield-sub">redline · 1h 4m in</div>
+            <div class="shield-btn" style="background:rgba(224,58,36,.14); border-color:rgba(224,58,36,.32);">back</div>
+          </div>
+        </div></div>
+        <figcaption>Redline profile — same layout, different world</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Exit cluster</h2>
+      <p>— no scrim, no capsules. The world dims itself; the options are text under the clock.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura" style="filter:brightness(.7);"></div>
+          <div class="exit-x">×</div>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div class="stopwatch" style="opacity:.55; transform:scale(.94) translateY(-14px); color:var(--text);">42:07</div>
+            <div class="micro" style="opacity:.55; margin-top:8px;">deep flow</div>
+            <div class="exit-stack">
+              <div class="exit-row" style="color:var(--text-2);">pause</div>
+              <div class="exit-row" style="color:var(--accent);">scan to stop</div>
+              <div class="exit-row micro danger" style="font-size:14px; font-weight:600; text-transform:none; letter-spacing:0;">emergency</div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption>Open state — world deepens, nothing is covered</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>Creating a profile</h2>
+      <p>— one long form becomes four full-bleed steps over the live world.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura"></div>
+          <div style="position:absolute; inset:0; padding-top:26px;">
+            <div class="step-dots"><i class="on"></i><i></i><i></i><i></i></div>
+            <div class="step-title">name</div>
+            <div class="step-name" style="color:var(--text);">deep flow<span style="opacity:.4">|</span></div>
+          </div>
+        </div></div>
+        <figcaption>Step 1 — name</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world cobalt"></div>
+          <div style="position:absolute; inset:0; padding-top:26px;">
+            <div class="step-dots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+            <div class="step-title" style="margin-top:120px;">world</div>
+            <div class="micro accent" style="text-align:center; margin-top:8px; font-size:15px; text-transform:none; letter-spacing:0; font-weight:650;">Cobalt</div>
+            <div class="step-worlds">
+              <div class="swatch-world" style="background:#0d1420;"></div>
+              <div class="swatch-world sel" style="background:linear-gradient(160deg,#2947c9,#0f1730);"></div>
+              <div class="swatch-world" style="background:linear-gradient(160deg,#23140f,#0c0808);"></div>
+              <div class="swatch-world" style="background:linear-gradient(160deg,#3a2440,#0d0a12);"></div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption>Step 2 — world, chosen full-bleed</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura"></div>
+          <div style="position:absolute; inset:0; padding-top:26px;">
+            <div class="step-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="step-title">blocks</div>
+            <div style="text-align:center; margin-top:110px;">
+              <div style="font-size:34px; font-weight:650; color:var(--accent);">34</div>
+              <div class="micro" style="margin-top:6px;">apps selected</div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption>Step 3 — blocks</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <div class="world aura"></div>
+          <div style="position:absolute; inset:0; padding-top:26px;">
+            <div class="step-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+            <div class="step-title">ends with</div>
+            <div class="step-list">
+              <div class="r"><b>manual</b><span>tap to start and stop. no tag needed.</span></div>
+              <div class="r sel"><b>nfc tag</b><span>scan a tag to start, scan again to stop.</span></div>
+              <div class="r"><b>manual + nfc</b><span>hold to start, scan a tag to stop.</span></div>
+              <div class="r"><b>timer</b><span>run for a set length. scan to stop early.</span></div>
+            </div>
+          </div>
+        </div></div>
+        <figcaption>Step 4 — ends with</figcaption>
+      </figure>
+    </div>
+  </section>
+
+</div>
+
+<div class="legend">
+  <div><b>Not shown</b><span>Header spacing under the Dynamic Island, the wheel-scroll fix, insights chart, and the shared motion system — all structural, nothing new to look at.</span></div>
+  <div><b>Device-only</b><span>The shield and Live Activity above are illustrative — Screen Time doesn't shield in the simulator, so final colors get a real on-device check.</span></div>
+  <div><b>Themes</b><span>All 8 worlds keep their palettes; Aura and Cobalt stand in here for the pattern every theme follows.</span></div>
+</div>
