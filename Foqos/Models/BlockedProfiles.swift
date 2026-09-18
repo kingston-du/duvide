@@ -373,9 +373,18 @@ class BlockedProfiles {
     _ profile: BlockedProfiles,
     in context: ModelContext
   ) throws {
+    // Whether this profile owned a live session at the moment it was deleted. The shield lives in
+    // the ManagedSettingsStore — system state that outlives both this row and the process — so
+    // deleting the profile out from under a running session used to leave the phone blocked with
+    // nothing left to stop: no session row, no profile, and a ✕ pointed at a deleted object.
+    // Callers are expected to refuse this (see `LoqinProfilesView.deleteProfiles`), but the
+    // teardown belongs here too, where it cannot be forgotten by the next caller.
+    var hadActiveSession = false
+
     // First end any active sessions
     for session in profile.sessions {
       if session.endTime == nil {
+        hadActiveSession = true
         session.endSession()
       }
     }
@@ -391,9 +400,37 @@ class BlockedProfiles {
     // Remove the schedule restrictions
     DeviceActivityCenterUtil.removeScheduleTimerActivities(for: profile)
 
+    if hadActiveSession {
+      releaseBlockingState(for: profile)
+    }
+
     // Then delete the profile
     context.delete(profile)
     // Defer context saving as the reference to the profile might be used
+  }
+
+  /// Drops every piece of blocking state a live session can leave behind outside SwiftData:
+  /// the shield itself, the App Group mirror, the soft-unblock allowance, the break / strategy /
+  /// pause activities keyed to this profile, and the engine's in-memory handle on the session.
+  ///
+  /// That last one matters as much as the shield. Leaving `StrategyManager.activeSession` pointed
+  /// at a row that has just been deleted keeps the locked surface up over an unblocked phone, and
+  /// reading `.name` off a deleted SwiftData object to render it is its own crash.
+  private static func releaseBlockingState(for profile: BlockedProfiles) {
+    SharedData.flushActiveSession()
+    AppBlockerUtil().deactivateRestrictions()
+    SoftUnblockGrantScheduler.stopAll()
+    SoftUnblockGrantStore.clearAll()
+    DeviceActivityCenterUtil.removeBreakTimerActivity(for: profile)
+    DeviceActivityCenterUtil.removeAllStrategyTimerActivities()
+    DeviceActivityCenterUtil.removePauseTimerActivity(for: profile)
+
+    let strategyManager = StrategyManager.shared
+    strategyManager.stopTimer()
+    strategyManager.activeSession = nil
+    strategyManager.elapsedTime = 0
+    strategyManager.sessionDisplayTime = 0
+    ActiveProfileSyncStore.publish(session: nil)
   }
 
   static func getProfileDeepLink(_ profile: BlockedProfiles) -> String {
