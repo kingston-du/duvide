@@ -407,6 +407,7 @@ struct LoqinProfileEditorView: View {
   }
 
   private func save() {
+    draft.commitTimerDurationAsStoredSetting()
     do {
       _ = try draft.save(existingProfile: profile, in: context)
       dismiss()

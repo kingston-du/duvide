@@ -300,6 +300,7 @@ struct LoqinProfileCreationView: View {
   }
 
   private func save() {
+    draft.commitTimerDurationAsStoredSetting()
     do {
       _ = try draft.save(existingProfile: nil, in: context)
       dismiss()
@@ -309,6 +310,7 @@ struct LoqinProfileCreationView: View {
   }
 
   private func openAdvanced() {
+    draft.commitTimerDurationAsStoredSetting()
     do {
       createdProfile = try draft.save(existingProfile: nil, in: context)
     } catch {

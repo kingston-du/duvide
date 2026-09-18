@@ -189,6 +189,25 @@ final class BlockedProfileDraft: ObservableObject {
     return newProfile
   }
 
+  /// Pins the timer duration currently shown as a *stored* setting rather than a starting
+  /// suggestion.
+  ///
+  /// `BlockedProfiles.shouldAskForStartSettings` is `askForStartSettings || strategyData == nil`,
+  /// and only the legacy form surfaces the "ask me every time" toggle — the loqin flows never
+  /// touch it, so it stays at its `true` default. The result was a stepper on the creation flow's
+  /// "ends with" step and a "duration" row in the editor that both read as settings and neither
+  /// behaved like one: every start re-prompted for a duration the user had already chosen (with
+  /// their value pre-filled, so it was an extra tap rather than lost data). The loqin flows call
+  /// this on save to make the setting mean what it says.
+  func commitTimerDurationAsStoredSetting() {
+    guard selectedStrategy?.hasTimer == true else { return }
+
+    // Round-tripped through `decode` so an untouched stepper commits the default it was showing,
+    // instead of leaving `strategyData` nil and re-prompting on that basis alone.
+    strategyData = StrategyTimerData.toData(from: StrategyTimerData.decode(strategyData))
+    askForStartSettings = false
+  }
+
   private func enforceStrategyBreaksPolicy() {
     if selectedStrategyAllowsTimedBreaks {
       return
