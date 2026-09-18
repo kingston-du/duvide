@@ -10,12 +10,17 @@ class RequestAuthorizer: ObservableObject {
     self.isAuthorized = getAuthorizationStatus() == .approved
   }
 
-  func requestAuthorization() {
+  /// `completion` runs on the main actor once the system has actually resolved the request and
+  /// `isAuthorized` reflects the outcome. Callers need this to tell a decline from a prompt the
+  /// user simply has not answered yet — Apple's Screen Time prompt is two stages deep and can sit
+  /// on screen for a while, so any timer guessing at it will be wrong for someone.
+  func requestAuthorization(completion: (() -> Void)? = nil) {
     // Re-prompting an already-authorized user is pointless, and reading the label from an
     // optimistic flag is what made the settings row look like it flipped "required" → "granted"
     // the moment it was tapped. Always read the true status instead.
     guard getAuthorizationStatus() != .approved else {
       refreshAuthorizationStatus()
+      completion?()
       return
     }
 
@@ -27,6 +32,7 @@ class RequestAuthorizer: ObservableObject {
       }
       await MainActor.run {
         self.refreshAuthorizationStatus()
+        completion?()
       }
     }
   }

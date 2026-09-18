@@ -74,6 +74,14 @@ private enum LoqinDeviceMetrics {
       .first { $0.isKeyWindow }?
       .safeAreaInsets.top ?? 47
   }
+
+  static var safeAreaBottom: CGFloat {
+    UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+      .first { $0.isKeyWindow }?
+      .safeAreaInsets.bottom ?? 34
+  }
 }
 
 private struct LoqinTopSafePadding: ViewModifier {
@@ -84,10 +92,26 @@ private struct LoqinTopSafePadding: ViewModifier {
   }
 }
 
+private struct LoqinBottomSafePadding: ViewModifier {
+  var extra: CGFloat
+
+  func body(content: Content) -> some View {
+    content.padding(.bottom, LoqinDeviceMetrics.safeAreaBottom + extra)
+  }
+}
+
 extension View {
   /// Top padding equal to the device's real safe area plus `extra` breathing room.
   func loqinTopSafePadding(_ extra: CGFloat = 12) -> some View {
     modifier(LoqinTopSafePadding(extra: extra))
+  }
+
+  /// Bottom padding equal to the device's real safe area plus `extra`. Needed by any full-bleed
+  /// screen that puts a control near the bottom: `ignoresSafeArea` lets the control sit under the
+  /// home indicator, where the system's own edge gesture takes a share of the touches and the
+  /// control reads as simply not responding.
+  func loqinBottomSafePadding(_ extra: CGFloat = 12) -> some View {
+    modifier(LoqinBottomSafePadding(extra: extra))
   }
 }
 

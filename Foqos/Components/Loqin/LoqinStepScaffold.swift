@@ -11,6 +11,9 @@ struct LoqinStepScaffold<Content: View>: View {
   let stepCount: Int
   var canAdvance: Bool = true
   var forwardLabel: String = "next"
+  /// False where there is genuinely nowhere to go back to (the front of first run), so the flow
+  /// does not offer a chevron that does nothing when pressed.
+  var showsBack: Bool = true
   let onBack: () -> Void
   let onAdvance: () -> Void
   @ViewBuilder var content: Content
@@ -22,14 +25,21 @@ struct LoqinStepScaffold<Content: View>: View {
         Spacer(minLength: 0)
         content
         Spacer(minLength: 0)
+        // Both screens that use this scaffold are full-bleed (`ignoresSafeArea`), which without
+        // this put the step's primary action under the home indicator: the system edge gesture
+        // swallows a share of the touches there, so "next"/"create" needs two or three taps and
+        // the flow reads as frozen on whichever step you are standing on.
         forward
-          .padding(.bottom, 22)
+          .loqinBottomSafePadding(22)
       }
       .loqinTopSafePadding(18)
 
       VStack {
         HStack {
           backButton
+            .opacity(showsBack ? 1 : 0)
+            .allowsHitTesting(showsBack)
+            .accessibilityHidden(!showsBack)
           Spacer()
         }
         Spacer()

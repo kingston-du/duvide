@@ -35,6 +35,18 @@ struct LoqinHomeView: View {
   @State private var pressPulse = 0
   @State private var holdEnterWorkItem: DispatchWorkItem?
 
+  /// Whether a tap on the home surface is currently allowed to start a session.
+  ///
+  /// The surface is one full-screen transparent layer with a `minimumDistance: 0` drag on it, so a
+  /// single tap anywhere begins a real block — for an NFC profile, one you then need the tag to
+  /// leave. That is far too eager to have live in the moments around a modal going away: a cover
+  /// torn down mid-touch can deliver that touch to whatever is underneath, and underneath
+  /// onboarding is exactly this gesture. Finishing first-run profile creation therefore dropped
+  /// the user straight into a locked session they never asked for, on a profile they had just
+  /// finished describing. Disarming across every dismissal also absorbs an impatient second tap.
+  @State private var isEnterArmed = false
+  @State private var enterArmWorkItem: DispatchWorkItem?
+
   // Scan errors (e.g. an NFC tag that isn't on the unlock list, or doesn't match the tag a
   // session was started with) surface as a native alert rather than in-theme UI — the failure
   // is about the physical tag, not the current world's look.
@@ -199,9 +211,25 @@ struct LoqinHomeView: View {
         }
       }
       syncLockedSurface()
+      armEnter()
+    }
+    .onChange(of: showOnboarding) { _, showing in
+      // First run ends here. Re-arm only once onboarding is fully gone, so the tap that finished
+      // profile creation cannot be the tap that starts a session on it.
+      if showing {
+        isEnterArmed = false
+        enterArmWorkItem?.cancel()
+        enterArmWorkItem = nil
+      } else {
+        armEnter()
+      }
+    }
+    .onChange(of: activeSheet) { _, sheet in
+      if sheet == nil { armEnter() }
     }
     .onChange(of: scenePhase) { _, phase in
       guard phase == .active else { return }
+      armEnter()
       // A session can start or end while this view is suspended — a schedule or timer firing in
       // the device-activity extension, a shortcut, the widget — and none of those deliver an
       // `onChange` here. Re-reading the engine on every foreground is what the legacy HomeView
@@ -328,7 +356,9 @@ struct LoqinHomeView: View {
             .onChanged { value in
               guard !isPressing else { return }
               isPressing = true
-              if !menuOpen {
+              // No ripple or haptic while disarmed either — feedback for a press that is going
+              // to be ignored reads as the app having taken the tap and then done nothing.
+              if !menuOpen, isEnterArmed {
                 beginPress(at: value.location)
                 if requiresHoldToEnter {
                   scheduleHoldEnter()
@@ -436,7 +466,24 @@ struct LoqinHomeView: View {
     }
   }
 
+  /// Re-arms the enter gesture a beat after whatever was covering the home surface has gone. The
+  /// delay only has to outlast the dismissal itself; a user who means to enter taps well after it.
+  private func armEnter(after delay: TimeInterval = 0.5) {
+    enterArmWorkItem?.cancel()
+    isEnterArmed = false
+    cancelHoldEnter()
+    let item = DispatchWorkItem {
+      isEnterArmed = true
+      enterArmWorkItem = nil
+    }
+    enterArmWorkItem = item
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+  }
+
   private func start() {
+    // Both entry gestures land here — the tap path directly, the hold path through its work item —
+    // so this one guard covers both.
+    guard isEnterArmed else { return }
     guard let profile = selectedProfile, !strategyManager.isBlocking else { return }
     if theme == .aura {
       withAnimation(.easeOut(duration: 0.32)) {

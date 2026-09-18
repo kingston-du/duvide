@@ -34,7 +34,8 @@ struct LoqinOnboardingView: View {
         stepCount: 2,
         canAdvance: step == .ready,
         forwardLabel: "get started",
-        onBack: {},  // this is the front of the app — there's nowhere before it to go back to
+        showsBack: false,  // this is the front of the app — there's nowhere before it to go back to
+        onBack: {},
         onAdvance: advance
       ) {
         switch step {
@@ -148,13 +149,12 @@ struct LoqinOnboardingView: View {
 
   private func requestAccess() {
     showSettingsHint = false
-    requestAuthorizer.requestAuthorization()
-    // requestAuthorization() resolves on its own time; if it's still not granted a moment later,
-    // this was almost certainly a decline rather than a slow system sheet, so offer the way out.
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-      if !requestAuthorizer.isAuthorized {
-        withAnimation(LoqinMotion.fade) { showSettingsHint = true }
-      }
+    // Driven by the request actually resolving, not by a timer. The old 1.4s guess fired while
+    // Apple's two-stage Screen Time prompt was still on screen, so the hint appeared *behind* the
+    // system sheet telling the user they had denied something they had not answered yet.
+    requestAuthorizer.requestAuthorization {
+      guard !requestAuthorizer.isAuthorized else { return }
+      withAnimation(LoqinMotion.fade) { showSettingsHint = true }
     }
   }
 
