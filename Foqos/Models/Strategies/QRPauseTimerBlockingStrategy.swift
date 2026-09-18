@@ -70,14 +70,15 @@ class QRPauseTimerBlockingStrategy: BlockingStrategy {
     profile: BlockedProfiles,
     forceStart: Bool
   ) {
-    appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
-
+    // Session before shield — see ManualBlockingStrategy for why the order matters.
     let activeSession = BlockedProfileSession.createSession(
       in: context,
       withTag: Self.id,
       withProfile: profile,
       forceStart: forceStart
     )
+
+    appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
 
     onSessionCreation?(.started(activeSession))
   }

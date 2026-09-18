@@ -7,6 +7,7 @@ import SwiftUI
 struct LoqinHomeView: View {
   @Environment(\.modelContext) private var context
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(\.scenePhase) private var scenePhase
   @EnvironmentObject private var strategyManager: StrategyManager
   @EnvironmentObject private var requestAuthorizer: RequestAuthorizer
 
@@ -21,6 +22,9 @@ struct LoqinHomeView: View {
   @State private var lockedProfile: BlockedProfiles?
   @State private var reveal: CGFloat = 0
   @State private var isExiting = false
+  /// The pending "tear down the locked surface once the exit animation has played out" work.
+  /// Held so a session started *during* that window can cancel it — see `onChange(of:isBlocking)`.
+  @State private var lockedClearWorkItem: DispatchWorkItem?
   @State private var breathing = false
   @State private var orbBright = false
 
@@ -89,7 +93,11 @@ struct LoqinHomeView: View {
   var body: some View {
     ZStack {
       transitionedHome
-        .allowsHitTesting(reveal == 0)
+        // `lockedProfile == nil` is a safety net, not a nicety: with no locked surface mounted
+        // there is nothing else on screen that can take a touch, so the home layer must stay live
+        // whatever `reveal` says. Without it, any state where `reveal > 0` outlives the locked
+        // surface leaves the whole screen inert — a running session with no way to reach ✕.
+        .allowsHitTesting(reveal == 0 || lockedProfile == nil)
         .blur(radius: menuOpen ? 16 : 0)
         .scaleEffect(menuOpen ? 0.985 : 1)
         .brightness(menuOpen ? -0.06 : 0)
@@ -97,7 +105,7 @@ struct LoqinHomeView: View {
         .zIndex(homeLayerZIndex)
 
       transitionedLocked
-        .allowsHitTesting(transitionT >= 1)
+        .allowsHitTesting(lockedProfile != nil && transitionT >= 1)
         .zIndex(lockedLayerZIndex)
 
       if !reduceMotion {
@@ -190,10 +198,17 @@ struct LoqinHomeView: View {
           breathing = true
         }
       }
-      if strategyManager.isBlocking {
-        lockedProfile = strategyManager.activeSession?.blockedProfile
-        reveal = 1
-      }
+      syncLockedSurface()
+    }
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active else { return }
+      // A session can start or end while this view is suspended — a schedule or timer firing in
+      // the device-activity extension, a shortcut, the widget — and none of those deliver an
+      // `onChange` here. Re-reading the engine on every foreground is what the legacy HomeView
+      // already does, and it is what lets a surface left inconsistent repair itself without the
+      // user having to force-quit the app.
+      strategyManager.loadActiveSession(context: context)
+      syncLockedSurface()
     }
     .onChange(of: profiles) { _, _ in
       if selectedProfileID == nil || !profiles.contains(where: { $0.id == selectedProfileID }) {
@@ -202,6 +217,21 @@ struct LoqinHomeView: View {
       showOnboarding = profiles.isEmpty
     }
     .onChange(of: strategyManager.isBlocking) { _, blocking in
+      // Any transition supersedes a teardown still queued from the previous one. Starting a
+      // session inside the exit window (stop, then tap straight back in — under 1.5s on the
+      // slower worlds) used to let that stale timer fire against the *new* session and null out
+      // `lockedProfile` while `reveal` was 1: the locked surface unmounted, the home layer was
+      // still hit-test-disabled behind it, and the screen went inert with the block running.
+      lockedClearWorkItem?.cancel()
+      lockedClearWorkItem = nil
+
+      // Entering on a hold takes the home layer's hit testing away while the finger is still
+      // down, so the drag that started the session is cancelled and its `onEnded` — the only
+      // thing that clears `isPressing` — never runs. Left set, it makes `onChanged` return early
+      // forever: once the session ends, the home screen ignores every tap and hold from then on.
+      isPressing = false
+      cancelHoldEnter()
+
       if blocking {
         isExiting = false
         lockedProfile = strategyManager.activeSession?.blockedProfile
@@ -214,9 +244,15 @@ struct LoqinHomeView: View {
         withAnimation(exitAnimation()) {
           reveal = 0
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + exitClearDelay) {
+        let clear = DispatchWorkItem {
+          // Re-checked at fire time as well as cancelled above: cancellation alone loses the race
+          // if the item is already dequeued when the new session lands.
+          guard !strategyManager.isBlocking else { return }
           lockedProfile = nil
+          lockedClearWorkItem = nil
         }
+        lockedClearWorkItem = clear
+        DispatchQueue.main.asyncAfter(deadline: .now() + exitClearDelay, execute: clear)
       }
     }
   }
@@ -249,19 +285,31 @@ struct LoqinHomeView: View {
     }
   }
 
+  /// Mounted for as long as there is any profile to render, and hidden with opacity rather than
+  /// removed — the same treatment the menu and utility overlays above already get, for the same
+  /// reason. Inserting this subtree on demand put it in the one situation this file has already
+  /// been burned by: a `GeometryReader`-rooted, full-screen layer appearing alongside the home
+  /// layer's own animated transforms, which can come up blank. Blank here is not cosmetic — the
+  /// session has started and the apps are blocked by the time it mounts, so a layer that fails to
+  /// draw reads as "it blocked everything without turning on", with the ✕ nowhere on screen.
   @ViewBuilder
   private var transitionedLocked: some View {
-    if let profile = lockedProfile {
-      if reduceMotion {
-        LoqinSessionView(profile: profile, progress: reveal)
-          .opacity(transitionT)
-      } else {
-        theme.lockedTransform(
-          LoqinSessionView(profile: profile, progress: reveal),
-          t: transitionT,
-          exiting: isExiting
-        )
+    if let profile = lockedProfile ?? selectedProfile {
+      let presenting = lockedProfile != nil
+      Group {
+        if reduceMotion {
+          LoqinSessionView(profile: profile, progress: reveal)
+            .opacity(transitionT)
+        } else {
+          theme.lockedTransform(
+            LoqinSessionView(profile: profile, progress: reveal),
+            t: transitionT,
+            exiting: isExiting
+          )
+        }
       }
+      .opacity(presenting ? 1 : 0)
+      .accessibilityHidden(!presenting)
     }
   }
 
@@ -402,6 +450,24 @@ struct LoqinHomeView: View {
     }
     // NFC profiles present their scan UI here (scan to enter); sleep/timer start immediately.
     strategyManager.toggleBlocking(context: context, activeProfile: profile)
+  }
+
+  /// Snaps the locked surface to whatever the engine actually reports, with no transition. Used
+  /// on appear and on foreground, where there is no animation to play — the user was not watching.
+  /// Idempotent, so it is safe to call whenever the two could have drifted apart.
+  private func syncLockedSurface() {
+    if strategyManager.isBlocking {
+      lockedClearWorkItem?.cancel()
+      lockedClearWorkItem = nil
+      lockedProfile = strategyManager.activeSession?.blockedProfile
+      isExiting = false
+      reveal = 1
+    } else if lockedClearWorkItem == nil {
+      // Skipped while a teardown is still queued: that exit is mid-animation and owns `reveal`.
+      lockedProfile = nil
+      isExiting = false
+      reveal = 0
+    }
   }
 
   private func closeMenus() {

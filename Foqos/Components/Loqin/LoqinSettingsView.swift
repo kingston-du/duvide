@@ -7,8 +7,11 @@ struct LoqinSettingsView: View {
   let onBack: () -> Void
 
   @EnvironmentObject private var requestAuthorizer: RequestAuthorizer
+  @EnvironmentObject private var strategyManager: StrategyManager
+  @Environment(\.modelContext) private var context
 
   @State private var showingAbout = false
+  @State private var showingResetConfirmation = false
 
   var body: some View {
     ZStack {
@@ -73,6 +76,42 @@ struct LoqinSettingsView: View {
             }
             .buttonStyle(LoqinRowButtonStyle(theme: theme))
             .loqinAppear(2)
+
+            // The way out when the shield and the session disagree — apps blocked with nothing
+            // running, so there is no ✕ anywhere to press. `resetBlockingState` has always been
+            // able to clear this, but it was only wired into the legacy SettingsView, which this
+            // UI never presents: the recovery existed and was unreachable. Hidden while a session
+            // is genuinely active, matching the guard inside `resetBlockingState` itself, so it
+            // never reads as a way to cheat your way out of a running block.
+            if !strategyManager.isBlocking {
+              divider
+
+              LoqinSectionLabel(text: "stuck?", theme: theme)
+                .padding(.top, 20)
+                .padding(.bottom, 4)
+
+              Button {
+                showingResetConfirmation = true
+              } label: {
+                LoqinRow(
+                  title: "clear app restrictions",
+                  systemImage: "exclamationmark.arrow.circlepath",
+                  theme: theme,
+                  accent: accent
+                )
+                .padding(.vertical, 6)
+              }
+              .buttonStyle(LoqinRowButtonStyle(theme: theme))
+              .loqinAppear(3)
+
+              Text(
+                "if your apps are still blocked but nothing is running, this lifts the block, "
+                  + "no profile or history is deleted"
+              )
+              .font(.system(size: 12))
+              .foregroundStyle(theme.textTertiary)
+              .padding(.top, 10)
+            }
           }
           .padding(.horizontal, 20)
           .padding(.bottom, 40)
@@ -89,6 +128,14 @@ struct LoqinSettingsView: View {
     .sheet(isPresented: $showingAbout) {
       LoqinAboutView(theme: theme, accent: accent)
         .presentationDragIndicator(.visible)
+    }
+    .alert("clear app restrictions", isPresented: $showingResetConfirmation) {
+      Button("cancel", role: .cancel) {}
+      Button("clear", role: .destructive) {
+        strategyManager.resetBlockingState(context: context)
+      }
+    } message: {
+      Text("lifts any block left behind when no profile is running, your profiles stay as they are")
     }
   }
 

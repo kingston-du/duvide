@@ -26,9 +26,10 @@ class ManualBlockingStrategy: BlockingStrategy {
     profile: BlockedProfiles,
     forceStart: Bool?
   ) -> (any View)? {
-    self.appBlocker
-      .activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
-
+    // Session first, shield second. The shield is durable system state that outlives the process
+    // while the session is ours to lose, so a failure between the two must leave a session with
+    // no shield (the user can still stop it) rather than a shield with no session (nothing left
+    // to stop, and no way out of the app). Same order in every strategy.
     let activeSession =
       BlockedProfileSession
       .createSession(
@@ -37,6 +38,9 @@ class ManualBlockingStrategy: BlockingStrategy {
         withProfile: profile,
         forceStart: forceStart ?? false
       )
+
+    self.appBlocker
+      .activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
 
     self.onSessionCreation?(.started(activeSession))
 

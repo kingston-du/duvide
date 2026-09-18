@@ -35,8 +35,7 @@ class QRCodeBlockingStrategy: BlockingStrategy {
     ) { result in
       switch result {
       case .success(let result):
-        self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
-
+        // Session before shield — see ManualBlockingStrategy for why the order matters.
         let tag = result.string
         let activeSession =
           BlockedProfileSession
@@ -46,6 +45,8 @@ class QRCodeBlockingStrategy: BlockingStrategy {
             withProfile: profile,
             forceStart: forceStart ?? false
           )
+
+        self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
         self.onSessionCreation?(.started(activeSession))
       case .failure(let error):
         self.onErrorMessage?(error.localizedDescription)

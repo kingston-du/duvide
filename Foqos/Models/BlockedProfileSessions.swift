@@ -225,6 +225,15 @@ class BlockedProfileSession {
     )
 
     context.insert(newSession)
+
+    // Saved here rather than left to autosave. By the time this runs the caller has already
+    // written the shield to the ManagedSettingsStore, which is durable system state that outlives
+    // the process — so until this row is on disk the two can disagree, and they disagree in the
+    // one direction that traps the user: apps blocked, no session to stop, nothing the UI can
+    // offer. Autosave runs on a run-loop boundary, so anything that kills the app first (a force
+    // quit, a crash) opens exactly that window.
+    try? context.save()
+
     return newSession
   }
 

@@ -29,8 +29,7 @@ class NFCBlockingStrategy: BlockingStrategy {
     forceStart: Bool?
   ) -> (any View)? {
     nfcScanner.onTagScanned = { tag in
-      self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
-
+      // Session before shield — see ManualBlockingStrategy for why the order matters.
       let tag = tag.url ?? tag.id
       let activeSession =
         BlockedProfileSession
@@ -40,6 +39,8 @@ class NFCBlockingStrategy: BlockingStrategy {
           withProfile: profile,
           forceStart: forceStart ?? false
         )
+
+      self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
       self.onSessionCreation?(.started(activeSession))
     }
 

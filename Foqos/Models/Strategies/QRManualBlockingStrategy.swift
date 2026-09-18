@@ -29,8 +29,7 @@ class QRManualBlockingStrategy: BlockingStrategy {
     profile: BlockedProfiles,
     forceStart: Bool?
   ) -> (any View)? {
-    self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
-
+    // Session before shield — see ManualBlockingStrategy for why the order matters.
     let activeSession =
       BlockedProfileSession
       .createSession(
@@ -39,6 +38,8 @@ class QRManualBlockingStrategy: BlockingStrategy {
         withProfile: profile,
         forceStart: forceStart ?? false
       )
+
+    self.appBlocker.activateRestrictions(for: BlockedProfiles.getSnapshot(for: profile))
 
     self.onSessionCreation?(.started(activeSession))
 
