@@ -52,6 +52,17 @@ class StrategyTimerActivity: TimerActivity {
       return
     }
 
+    // Same end-of-session notification `ScheduleTimerActivity.stop` already sends. Without it a
+    // timer expiring out here left the soft-unblock allowance and its pending grant timers
+    // registered against a session that no longer exists, and a grant firing afterwards would
+    // re-apply restrictions with nothing running.
+    BlockingSessionLifecycleRegistry.sessionDidEnd(
+      BlockingSessionLifecycleContext(
+        profile: profile,
+        session: activeSession
+      )
+    )
+
     // End restrictions
     appBlocker.deactivateRestrictions()
 

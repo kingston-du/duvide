@@ -8,6 +8,8 @@ private let log = Logger(
 )
 
 class ShieldActionExtension: ShieldActionDelegate {
+  private let appBlocker = AppBlockerUtil()
+
   override func handle(
     action: ShieldAction,
     for application: ApplicationToken,
@@ -83,8 +85,27 @@ class ShieldActionExtension: ShieldActionDelegate {
         sessionId: grant.sessionId
       )
       log.error("Failed to schedule a soft-unblock grant: \(error.localizedDescription)")
+      completionHandler(.close)
+      return
     }
 
+    // Lift the shield here rather than waiting for the scheduler's `intervalDidStart` to do it.
+    // That activity's interval starts at the top of today — already in the past — so the callback
+    // firing at all is not something to depend on, and the user has spent an allowance by this
+    // point. If it never arrived they were sent back to a still-shielded app one open poorer.
+    // The monitor callback recomputes from the same grant store, so running both is idempotent.
+    applyActiveGrants(for: session.profileId, snapshot: snapshot)
+
     completionHandler(.close)
+  }
+
+  private func applyActiveGrants(for profileId: UUID, snapshot: SharedData.ProfileSnapshot) {
+    let activeGrants = SoftUnblockGrantStore.activeGrants(for: profileId)
+
+    appBlocker.activateSoftUnblockRestrictions(
+      for: snapshot,
+      unblockedApplicationTokens: Set(activeGrants.compactMap(\.resource.applicationToken)),
+      unblockedCategoryTokens: Set(activeGrants.compactMap(\.resource.categoryToken))
+    )
   }
 }
