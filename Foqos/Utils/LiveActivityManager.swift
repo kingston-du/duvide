@@ -65,15 +65,21 @@ class LiveActivityManager: ObservableObject {
       restoreExistingActivity()
     }
 
+    // The profile's own setting is checked before any reuse, and anything already running is torn
+    // down rather than adopted. Checking it after the "already running, update instead" branch
+    // meant a leaked activity from an earlier session was inherited and kept alive by a profile
+    // that had Live Activities turned off — the setting only worked when there was nothing to
+    // inherit.
+    if session.blockedProfile.enableLiveActivity == false {
+      print("Activity is disabled for profile")
+      endSessionActivity()
+      return
+    }
+
     // Check if we already have an activity running
     if currentActivity != nil {
       print("Live Activity is already running, will update instead")
       updateSessionActivity(session: session)
-      return
-    }
-
-    if session.blockedProfile.enableLiveActivity == false {
-      print("Activity is disabled for profile")
       return
     }
 

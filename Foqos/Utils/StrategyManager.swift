@@ -322,6 +322,17 @@ class StrategyManager: ObservableObject {
           return
         }
 
+        // `strategyData` is one field shared by every strategy's settings, so writing timer data
+        // into it is only lossless for a profile whose own strategy stores timer data. Doing it
+        // unconditionally meant one Shortcut run with a duration permanently replaced a
+        // pause-timer or soft-unblock profile's configuration with a timer's, and left it that
+        // way. The write still has to happen — `startStrategyTimerActivity` reads the duration
+        // back off the profile — but for those profiles it is put back afterwards.
+        let ownStrategyStoresTimerData =
+          StrategyManager.getStrategyFromId(id: profile.blockingStrategyId ?? "").hasTimer
+        let originalStrategyData = profile.strategyData
+        let originalUpdatedAt = profile.updatedAt
+
         if let strategyTimerData = StrategyTimerData.toData(
           from: StrategyTimerData(durationInMinutes: duration, hideStopButton: false)
         ) {
@@ -338,6 +349,13 @@ class StrategyManager: ObservableObject {
           profile: profile,
           forceStart: true
         )
+
+        if !ownStrategyStoresTimerData {
+          profile.strategyData = originalStrategyData
+          profile.updatedAt = originalUpdatedAt
+          BlockedProfiles.updateSnapshot(for: profile)
+          try context.save()
+        }
       } else {
         let manualStrategy = getStrategy(id: ManualBlockingStrategy.id, context: context)
         _ = manualStrategy.startBlocking(
@@ -469,10 +487,10 @@ class StrategyManager: ObservableObject {
       session: activeSession
     )
 
-    // Do end sections for the profile
-    self.liveActivityManager.endSessionActivity()
-    self.scheduleReminder(profile: activeSession.blockedProfile)
-    self.stopTimer()
+    // `stopBlocking` above already ran the full end-of-session teardown through
+    // `handleSessionEnded` — the live activity, the reminder and the timer are all handled there.
+    // Repeating it here scheduled the reminder notification a second time, so an emergency
+    // unblock fired two identical "time!" notifications.
 
     // Decrement the remaining emergency unblocks
     emergencyUnblocksRemaining -= 1

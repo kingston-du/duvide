@@ -113,6 +113,13 @@ struct LoqinSessionView: View {
     .animation(.easeInOut(duration: 0.25), value: strategyManager.isBreakActive)
     .sensoryFeedback(.impact(weight: .light), trigger: isShowingExitOptions) { _, opened in opened }
     .sensoryFeedback(.selection, trigger: exitChoiceTick)
+    // This view stays mounted between sessions (hidden behind opacity), so its state carries over.
+    // A session ended from anywhere but the exit row — a timer expiring, a scan, a shortcut —
+    // used to leave the row open, and the next session opened with it already showing.
+    .onChange(of: strategyManager.isBlocking) { _, blocking in
+      guard !blocking else { return }
+      isShowingExitOptions = false
+    }
     .sheet(isPresented: $showEmergency) {
       LoqinEmergencyView(theme: theme, accent: accent)
         .presentationDetents([.height(430), .large])
