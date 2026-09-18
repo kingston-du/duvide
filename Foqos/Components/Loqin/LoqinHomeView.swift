@@ -10,6 +10,8 @@ struct LoqinHomeView: View {
   @Environment(\.scenePhase) private var scenePhase
   @EnvironmentObject private var strategyManager: StrategyManager
   @EnvironmentObject private var requestAuthorizer: RequestAuthorizer
+  @EnvironmentObject private var navigationManager: NavigationManager
+  @EnvironmentObject private var ratingManager: RatingManager
 
   @Query(sort: [SortDescriptor(\BlockedProfiles.order, order: .forward)])
   private var profiles: [BlockedProfiles]
@@ -88,6 +90,20 @@ struct LoqinHomeView: View {
     showMenu || showMore
   }
 
+  /// True once a countdown session is far enough past its expected end that the engine should be
+  /// re-read. A timer session is ended by the device-activity extension, out of process — the
+  /// shields come off and the shared session closes without anything notifying this view. Nothing
+  /// else here reacts to that, so without this the locked surface and its running clock stay up,
+  /// over apps that are no longer blocked, until the app is backgrounded and brought forward
+  /// again. This re-evaluates on the session timer's per-second publish.
+  private var isCountdownReloadDue: Bool {
+    guard let activeSession = strategyManager.activeSession else {
+      return false
+    }
+
+    return SessionTimeCalculator.isCountdownReloadDue(for: activeSession)
+  }
+
   private var menuAnimation: Animation {
     reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.45)
   }
@@ -119,7 +135,12 @@ struct LoqinHomeView: View {
         .zIndex(homeLayerZIndex)
 
       transitionedLocked
-        .allowsHitTesting(lockedProfile != nil && transitionT >= 1)
+        // `transitionT` is progress, not presence — on the way *out* it also runs 0 → 1, so the
+        // old `transitionT >= 1` turned hit testing back on at the exact moment the surface
+        // finished fading away, and `lockedProfile` isn't nil'd until `exitClearDelay` after
+        // that. For those ~150ms an invisible session view sat above the home layer and ate the
+        // first tap back in. `!isExiting` is what separates "arrived" from "left".
+        .allowsHitTesting(lockedProfile != nil && !isExiting && transitionT >= 1)
         .zIndex(lockedLayerZIndex)
 
       if !reduceMotion {
@@ -206,6 +227,10 @@ struct LoqinHomeView: View {
         selectedProfileID = profiles.first?.id
       }
       strategyManager.loadActiveSession(context: context)
+      // Schedule activities registered for a profile that no longer has a schedule (or no longer
+      // exists) keep firing on their own. Nothing else calls this any more, so without it here
+      // they accumulate and start sessions the user removed.
+      strategyManager.cleanUpGhostSchedules(context: context)
       showOnboarding = profiles.isEmpty
       if !reduceMotion {
         withAnimation(.easeInOut(duration: 4.8).repeatForever(autoreverses: true)) {
@@ -240,11 +265,37 @@ struct LoqinHomeView: View {
       strategyManager.loadActiveSession(context: context)
       syncLockedSurface()
     }
+    .onChange(of: isCountdownReloadDue, initial: true) { _, shouldReload in
+      guard shouldReload else { return }
+      // Deliberately no `syncLockedSurface()`: clearing the session flips `isBlocking`, and that
+      // handler already plays the exit properly. Snapping as well would race it.
+      strategyManager.loadActiveSession(context: context)
+    }
     .onChange(of: profiles) { _, _ in
       if selectedProfileID == nil || !profiles.contains(where: { $0.id == selectedProfileID }) {
         selectedProfileID = profiles.first?.id
       }
       showOnboarding = profiles.isEmpty
+    }
+    // Tag-to-toggle. A background NFC scan or a QR code opens
+    // `https://foqos.app/profile/<id>`, which `foqosApp.onOpenURL` hands to the navigation
+    // manager; this is the only place that consumes it. It was left behind in the legacy
+    // `HomeView` when this view became the root, which quietly killed the whole feature —
+    // scanning a tag launched the app and did nothing.
+    .onChange(of: navigationManager.profileId, initial: true) { _, profileId in
+      guard let profileId, let link = navigationManager.link else { return }
+      strategyManager.toggleSessionFromDeeplink(profileId, url: link, context: context)
+      navigationManager.clearNavigation()
+    }
+    // `https://foqos.app/navigate/<id>` selects a profile without starting it. The legacy home
+    // screen opened its start-picker preselected; here the selection *is* the home screen, so
+    // pointing it at that profile is the whole action.
+    .onChange(of: navigationManager.navigateToProfileId, initial: true) { _, profileId in
+      guard let profileId, let id = UUID(uuidString: profileId) else { return }
+      if profiles.contains(where: { $0.id == id }) {
+        selectedProfileID = id
+      }
+      navigationManager.clearNavigation()
     }
     .onChange(of: strategyManager.isBlocking) { _, blocking in
       // Any transition supersedes a teardown still queued from the previous one. Starting a
@@ -283,6 +334,15 @@ struct LoqinHomeView: View {
         lockedClearWorkItem = clear
         DispatchQueue.main.asyncAfter(deadline: .now() + exitClearDelay, execute: clear)
       }
+    }
+    // Switching straight from one profile to another — a tag or a shortcut hitting
+    // `toggleSessionFromBackground` — stops and starts inside a single update, so `isBlocking`
+    // goes true → true and the handler above never runs. Watching the session's identity instead
+    // catches that case; without it the locked surface keeps rendering the name and world of the
+    // profile that just ended, over a session belonging to a different one.
+    .onChange(of: strategyManager.activeSession?.id) { _, _ in
+      guard strategyManager.isBlocking else { return }
+      lockedProfile = strategyManager.activeSession?.blockedProfile
     }
   }
 
@@ -494,6 +554,11 @@ struct LoqinHomeView: View {
     }
     // NFC profiles present their scan UI here (scan to enter); sleep/timer start immediately.
     strategyManager.toggleBlocking(context: context, activeProfile: profile)
+
+    // The review prompt counts sessions, and this is the only place one starts from the UI. Its
+    // sole caller lived in the legacy `HomeView`, so the prompt could never fire once this view
+    // became the root.
+    ratingManager.incrementLaunchCount()
   }
 
   /// Snaps the locked surface to whatever the engine actually reports, with no transition. Used
