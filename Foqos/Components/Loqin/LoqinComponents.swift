@@ -76,6 +76,45 @@ struct LoqinPressButtonStyle: ButtonStyle {
   }
 }
 
+/// The one unmistakably-a-button shape in the loqin set: a filled accent capsule with ink type.
+/// Used where a tap is the whole point of the screen and plain reactive type isn't obvious enough
+/// — first-run's Screen Time request being the case that forced it: onboarding's single action
+/// read as one more line of the paragraph above it.
+///
+/// Pressed, it does more than tint: the fill deepens, the glow collapses, and the capsule settles
+/// a visible 3% — three changes at once so the tap registers even mid-motion or on a glance.
+/// `isBusy` holds that pressed-looking state and dims the label while something the button kicked
+/// off is still resolving, so "nothing is happening" and "waiting on the system" don't look alike.
+struct LoqinFilledPillButtonStyle: ButtonStyle {
+  var accent: Color
+  var ink: Color
+  var isBusy: Bool = false
+
+  func makeBody(configuration: Configuration) -> some View {
+    let engaged = configuration.isPressed || isBusy
+
+    configuration.label
+      .font(.system(size: 16, weight: .semibold))
+      .foregroundStyle(ink.opacity(isBusy ? 0.62 : 1))
+      .padding(.horizontal, 30)
+      .frame(height: 52)
+      .frame(minWidth: 210)
+      .background(
+        Capsule()
+          .fill(engaged ? accent.opacity(0.78) : accent)
+      )
+      .overlay(
+        Capsule()
+          .strokeBorder(Color.white.opacity(engaged ? 0.34 : 0.14), lineWidth: 1)
+      )
+      .shadow(color: accent.opacity(engaged ? 0.16 : 0.42), radius: engaged ? 8 : 20, y: engaged ? 2 : 8)
+      .scaleEffect(engaged ? 0.97 : 1)
+      .contentShape(Capsule())
+      .animation(LoqinMotion.tap, value: configuration.isPressed)
+      .animation(LoqinMotion.tap, value: isBusy)
+  }
+}
+
 /// Press feedback for tappable list rows: a quiet highlight and a tiny settle, theme-aware so it
 /// still reads on Porcelain's light surface.
 struct LoqinRowButtonStyle: ButtonStyle {

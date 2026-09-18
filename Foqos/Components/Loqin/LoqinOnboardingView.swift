@@ -17,6 +17,10 @@ struct LoqinOnboardingView: View {
   @State private var step: Step = .permission
   @State private var showingProfileCreation = false
   @State private var showSettingsHint = false
+  /// True from the tap until Apple's (two-stage, slow) Screen Time prompt actually resolves, so
+  /// the button can hold a visible waiting state instead of looking inert while the system sheet
+  /// is still coming up.
+  @State private var isRequesting = false
 
   private enum Step: Int {
     case permission
@@ -84,12 +88,28 @@ struct LoqinOnboardingView: View {
         .lineSpacing(3)
 
       Button(action: requestAccess) {
-        Text("allow access")
-          .font(.system(size: 16, weight: .semibold))
-          .foregroundStyle(AuraTheme.accent)
-          .padding(.top, 14)
+        HStack(spacing: 9) {
+          if isRequesting {
+            ProgressView()
+              .progressViewStyle(.circular)
+              .tint(AuraTheme.accentInk.opacity(0.7))
+              .scaleEffect(0.8)
+          }
+          Text(isRequesting ? "waiting for screen time" : "allow access")
+        }
       }
-      .buttonStyle(LoqinPressButtonStyle(accent: AuraTheme.textPrimary, restingColor: AuraTheme.accent))
+      .buttonStyle(
+        LoqinFilledPillButtonStyle(
+          accent: AuraTheme.accent,
+          ink: AuraTheme.accentInk,
+          isBusy: isRequesting
+        )
+      )
+      .disabled(isRequesting)
+      .padding(.top, 10)
+      .sensoryFeedback(.impact(weight: .medium), trigger: isRequesting) { _, requesting in requesting }
+      .accessibilityLabel(isRequesting ? "Waiting for Screen Time confirmation" : "Allow access")
+      .accessibilityHint("Opens Apple's Screen Time permission prompt.")
 
       if showSettingsHint {
         Button {
@@ -148,11 +168,14 @@ struct LoqinOnboardingView: View {
   }
 
   private func requestAccess() {
+    guard !isRequesting else { return }
     showSettingsHint = false
+    isRequesting = true
     // Driven by the request actually resolving, not by a timer. The old 1.4s guess fired while
     // Apple's two-stage Screen Time prompt was still on screen, so the hint appeared *behind* the
     // system sheet telling the user they had denied something they had not answered yet.
     requestAuthorizer.requestAuthorization {
+      isRequesting = false
       guard !requestAuthorizer.isAuthorized else { return }
       withAnimation(LoqinMotion.fade) { showSettingsHint = true }
     }
