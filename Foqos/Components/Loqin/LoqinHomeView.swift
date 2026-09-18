@@ -33,7 +33,6 @@ struct LoqinHomeView: View {
   @State private var pressLocation: CGPoint = .zero
   @State private var isPressing = false
   @State private var pressPulse = 0
-  @State private var holdEnterWorkItem: DispatchWorkItem?
 
   /// Whether a tap on the home surface is currently allowed to start a session.
   ///
@@ -46,6 +45,9 @@ struct LoqinHomeView: View {
   /// finished describing. Disarming across every dismissal also absorbs an impatient second tap.
   @State private var isEnterArmed = false
   @State private var enterArmWorkItem: DispatchWorkItem?
+
+  /// How long the finger must stay down to enter a hold-to-enter profile.
+  private static let holdToEnterDuration: TimeInterval = 0.5
 
   // Scan errors (e.g. an NFC tag that isn't on the unlock list, or doesn't match the tag a
   // session was started with) surface as a native alert rather than in-theme UI — the failure
@@ -258,7 +260,6 @@ struct LoqinHomeView: View {
       // thing that clears `isPressing` — never runs. Left set, it makes `onChanged` return early
       // forever: once the session ends, the home screen ignores every tap and hold from then on.
       isPressing = false
-      cancelHoldEnter()
 
       if blocking {
         isExiting = false
@@ -360,14 +361,10 @@ struct LoqinHomeView: View {
               // to be ignored reads as the app having taken the tap and then done nothing.
               if !menuOpen, isEnterArmed {
                 beginPress(at: value.location)
-                if requiresHoldToEnter {
-                  scheduleHoldEnter()
-                }
               }
             }
             .onEnded { value in
               isPressing = false
-              cancelHoldEnter()
               if menuOpen {
                 closeMenus()
                 return
@@ -381,6 +378,7 @@ struct LoqinHomeView: View {
               }
             }
         )
+        .simultaneousGesture(holdEnterGesture)
 
       theme.pressRipple(accent: accent)
         .scaleEffect(pressScale)
@@ -471,7 +469,6 @@ struct LoqinHomeView: View {
   private func armEnter(after delay: TimeInterval = 0.5) {
     enterArmWorkItem?.cancel()
     isEnterArmed = false
-    cancelHoldEnter()
     let item = DispatchWorkItem {
       isEnterArmed = true
       enterArmWorkItem = nil
@@ -560,18 +557,20 @@ struct LoqinHomeView: View {
     }
   }
 
-  private func scheduleHoldEnter() {
-    cancelHoldEnter()
-    let item = DispatchWorkItem {
-      self.start()
-    }
-    holdEnterWorkItem = item
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
-  }
-
-  private func cancelHoldEnter() {
-    holdEnterWorkItem?.cancel()
-    holdEnterWorkItem = nil
+  /// Hold-to-enter, for the one strategy that asks for it (manual + nfc). Deliberately a real
+  /// `LongPressGesture` rather than a timer armed on touch-down and cancelled from the drag's
+  /// `onEnded`, which is what this was: that shape is only correct while `onEnded` is guaranteed to
+  /// arrive, and on this screen it is not — a gesture torn up mid-flight by a re-render never ends,
+  /// so nothing cancelled the timer and it started a session half a second after the finger had
+  /// already lifted. A plain tap became a hold, on the one profile kind you can only leave by
+  /// scanning a tag. SwiftUI will not fire a long press that was released early or cancelled, so
+  /// the guarantee now comes from the framework instead of from our own bookkeeping.
+  private var holdEnterGesture: some Gesture {
+    LongPressGesture(minimumDuration: Self.holdToEnterDuration)
+      .onEnded { _ in
+        guard requiresHoldToEnter, !menuOpen else { return }
+        start()
+      }
   }
 
   private var strategyActionSheetBinding: Binding<Bool> {
