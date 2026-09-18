@@ -3,8 +3,8 @@ import SwiftData
 import SwiftUI
 
 /// Full Aura profile editor. Name, world, stop method, blocked apps, websites, physical NFC
-/// unlocks, schedule, timed breaks, emergency unblocks, and notifications — all backed by the foqos
-/// engine. The copy is kept calm and lowercase to match the rest of loqin.
+/// unlocks, schedule, timed breaks, emergency unblocks, and notifications, all backed by the foqos
+/// engine. Copy is lowercase, one clause per caption, commas not periods, no terminal period.
 struct LoqinProfileEditorView: View {
   let profile: BlockedProfiles?  // nil = new profile
 
@@ -89,7 +89,7 @@ struct LoqinProfileEditorView: View {
         TimerDurationView(
           profileName: draft.name.isEmpty ? "this profile" : draft.name,
           initialConfiguration: StrategyTimerData.decode(draft.strategyData),
-          actionTitle: "Save Duration",
+          actionTitle: "save",
           showsDisableStopButton: false
         ) { configuration in
           draft.strategyData = StrategyTimerData.toData(from: configuration)
@@ -97,7 +97,7 @@ struct LoqinProfileEditorView: View {
         .presentationDetents([.medium, .large])
       }
       .alert(
-        "Couldn't Save Profile",
+        "couldn't save profile",
         isPresented: Binding(
           get: { errorMessage != nil },
           set: { if !$0 { errorMessage = nil } }
@@ -105,7 +105,7 @@ struct LoqinProfileEditorView: View {
       ) {
         Button("OK", role: .cancel) {}
       } message: {
-        Text(errorMessage ?? "An unknown error occurred.")
+        Text(errorMessage ?? "something went wrong")
       }
       .onAppear {
         if profile == nil {
@@ -120,7 +120,7 @@ struct LoqinProfileEditorView: View {
 
   private var nameSection: some View {
     Section {
-      TextField("name your flow", text: $draft.name)
+      TextField("profile name", text: $draft.name)
         .foregroundStyle(AuraTheme.textPrimary)
         .textContentType(.none)
         .editorRow()
@@ -198,7 +198,7 @@ struct LoqinProfileEditorView: View {
         showingActivityPicker = true
       } label: {
         HStack {
-          Text(draft.enableAllowMode ? "select apps to allow" : "select apps to restrict")
+          Text(draft.enableAllowMode ? "apps to allow" : "apps to block")
             .foregroundStyle(AuraTheme.textPrimary)
           Spacer()
           Text(appCountLabel)
@@ -224,8 +224,7 @@ struct LoqinProfileEditorView: View {
 
       LoqinToggle(
         title: "block websites in safari",
-        description:
-          "Extends the block to Safari — the sites below stay closed too.",
+        description: "also block the sites behind your blocked apps",
         isOn: $draft.enableSafariBlocking
       )
       .editorRow()
@@ -240,7 +239,7 @@ struct LoqinProfileEditorView: View {
         showingDomainPicker = true
       } label: {
         HStack {
-          Text(draft.enableAllowModeDomain ? "select domains to allow" : "select domains to restrict")
+          Text(draft.enableAllowModeDomain ? "sites to allow" : "sites to block")
             .foregroundStyle(AuraTheme.textPrimary)
           Spacer()
           Text(domainCountLabel)
@@ -254,8 +253,8 @@ struct LoqinProfileEditorView: View {
       .editorRow()
 
       LoqinToggle(
-        title: "allow only these domains",
-        description: "Every other site stays closed while this runs.",
+        title: "allow only these sites",
+        description: "every other site is blocked",
         isOn: $draft.enableAllowModeDomain
       )
       .editorRow()
@@ -271,9 +270,7 @@ struct LoqinProfileEditorView: View {
     } header: {
       LoqinSectionLabel(text: "unlock tags", theme: .aura)
     } footer: {
-      Text(
-        "Only the tags added here will unlock this profile early — any other NFC tag will be rejected."
-      )
+      Text("only tags added here can unlock this profile, all other tags are rejected")
     }
   }
 
@@ -305,7 +302,7 @@ struct LoqinProfileEditorView: View {
       if draft.selectedStrategyAllowsTimedBreaks {
         LoqinToggle(
           title: "allow timed breaks",
-          description: "A short pause that ends on its own — no need to come back and stop it.",
+          description: "a short pause that ends on its own",
           isOn: $draft.enableBreaks
         )
         .editorRow()
@@ -323,13 +320,13 @@ struct LoqinProfileEditorView: View {
 
           LoqinToggle(
             title: "allow multiple breaks",
-            description: "Spend your break time across more than one pause.",
+            description: "split your break time into more than one pause",
             isOn: $draft.allowMultipleBreaks
           )
           .editorRow()
         }
       } else {
-        Text("breaks aren't available for this stop method.")
+        Text("not available with this stop method")
           .font(.caption)
           .foregroundStyle(AuraTheme.textSecondary)
           .editorRow()
@@ -343,7 +340,7 @@ struct LoqinProfileEditorView: View {
     Section {
       LoqinToggle(
         title: "emergency unblock",
-        description: "A narrow way out, for real emergencies only.",
+        description: "end a session early in an emergency",
         isOn: $draft.enableEmergencyUnblock
       )
       .editorRow()
@@ -393,7 +390,7 @@ struct LoqinProfileEditorView: View {
   private var domainCountLabel: String {
     let count = draft.domains.count
     if count == 0 { return "none" }
-    return "\(count) \(count == 1 ? "domain" : "domains")"
+    return "\(count) \(count == 1 ? "site" : "sites")"
   }
 
   private var durationLabel: String {
@@ -406,7 +403,7 @@ struct LoqinProfileEditorView: View {
   }
 
   private var scheduleSummary: String {
-    draft.schedule.isActive ? draft.schedule.summaryText : "no schedule"
+    draft.schedule.isActive ? draft.schedule.summaryText : "none"
   }
 
   private func save() {
@@ -420,7 +417,7 @@ struct LoqinProfileEditorView: View {
 
   // MARK: - Strategy copy
 
-  /// Calm, lowercase labels for the four loqin strategies, matching the app's voice.
+  /// Lowercase labels for the four loqin strategies, matching the app's voice.
   static func loqinStrategyName(_ strategy: BlockingStrategy) -> String {
     switch strategy.getIdentifier() {
     case ManualBlockingStrategy.id: return "manual"
@@ -433,10 +430,11 @@ struct LoqinProfileEditorView: View {
 
   static func loqinStrategyDescription(_ strategy: BlockingStrategy) -> String {
     switch strategy.getIdentifier() {
-    case ManualBlockingStrategy.id: return "Tap to begin. Tap again to leave."
-    case NFCBlockingStrategy.id: return "Scan your tag to begin. Scan again to leave."
-    case NFCManualBlockingStrategy.id: return "Hold to begin. Scan your tag to leave."
-    case NFCTimerBlockingStrategy.id: return "Runs for a set time. Scan your tag to leave early."
+    case ManualBlockingStrategy.id: return "tap to begin and end"
+    case NFCBlockingStrategy.id: return "scan same tag to begin and end"
+    // "hold", not "tap": the home screen gates this strategy behind `entryGesture == .hold`.
+    case NFCManualBlockingStrategy.id: return "hold to begin, scan tag to end"
+    case NFCTimerBlockingStrategy.id: return "run for a set time, scan tag to end early"
     default: return strategy.description
     }
   }
@@ -538,7 +536,7 @@ private struct LoqinPhysicalUnlockSelector: View {
         .foregroundStyle(AuraTheme.accent)
       }
     }
-    .alert("Error", isPresented: $showingError) {
+    .alert("couldn't add tag", isPresented: $showingError) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(errorMessage)
@@ -557,7 +555,7 @@ private struct LoqinPhysicalUnlockSelector: View {
     let normalizedCodeValue = PhysicalUnblockItem.normalizedCodeValue(codeValue, type: .nfc)
 
     guard !normalizedCodeValue.isEmpty else {
-      errorMessage = "The scanned tag was empty."
+      errorMessage = "that tag is empty"
       showingError = true
       return
     }
@@ -567,7 +565,7 @@ private struct LoqinPhysicalUnlockSelector: View {
         $0.type == .nfc && $0.codeValue == normalizedCodeValue
       })
     else {
-      errorMessage = "That NFC tag is already in this list."
+      errorMessage = "that tag is already added"
       showingError = true
       return
     }

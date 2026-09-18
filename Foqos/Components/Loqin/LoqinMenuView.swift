@@ -35,9 +35,9 @@ struct LoqinMenuView: View {
   @State private var openingProfileID: UUID?
 
   private let rowHeight: CGFloat = 62
-  /// The band the wheel *reads* as occupying. Only used to place the chrome around the wheel (the
-  /// "more" button, the "time saved" header) — deliberately not the fade geometry, which is
-  /// measured in whole rows instead. See `wheelMask(in:)`.
+  /// The band the wheel *reads* as occupying. Only used to place the "time saved" header above it
+  /// — deliberately not the fade geometry, which is measured in whole rows instead. See
+  /// `wheelMask(in:)`.
   private let pickerHeight: CGFloat = 248
 
   /// How many row-heights from the center a row takes to fade to nothing. The falloff is applied
@@ -48,6 +48,9 @@ struct LoqinMenuView: View {
   /// is still faintly visible, and the cubic ramp below keeps nearly all of it in the last row of
   /// the falloff, so the immediate neighbour of the centered row stays effectively sharp.
   private static let maxRowBlur: CGFloat = 6.5
+  /// Distance from the bottom of the wheel's falloff to the center of the "more" button. The
+  /// button's own vertical padding adds to the whitespace this leaves above its label.
+  private static let moreButtonGap: CGFloat = 20
 
   init(
     selectedProfileID: Binding<UUID?>,
@@ -74,10 +77,13 @@ struct LoqinMenuView: View {
 
         scrollSurface(size: geo.size)
           .overlay {
-            // Derived from the wheel's own height rather than a hand-tuned constant, so the gap
-            // to "more" scales if the wheel's band ever does.
+            // Measured from where rows have faded to nothing (`falloffRows`) rather than from
+            // `pickerHeight`: the nominal band's edge falls mid-row, so placing "more" relative
+            // to it tucked the button into the still-visible tail of the wheel. Starting past
+            // the falloff means the gap is always clear space, and it still scales with the row
+            // height if the wheel's geometry ever changes.
             moreButton
-              .offset(y: pickerHeight / 2 + 44)
+              .offset(y: rowHeight * Self.falloffRows + Self.moreButtonGap)
           }
 
         savedTimeHeader(size: geo.size)
