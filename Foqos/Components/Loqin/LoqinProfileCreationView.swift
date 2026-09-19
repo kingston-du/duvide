@@ -233,9 +233,15 @@ struct LoqinProfileCreationView: View {
       }
       .buttonStyle(LoqinRowButtonStyle(theme: theme))
 
+      // A timer profile asks for its length every time it starts, so this stepper sets the value
+      // that prompt opens on rather than the length of the session. Labelled as the default so it
+      // doesn't read as a decision that's already been made.
+      //
+      // Range matches `TimerDurationView`'s own floor of 15m — the old 5m lower bound could store
+      // a default the start prompt has no way to show.
       if isSelected, strategy.hasTimer {
-        Stepper(value: timerDurationBinding, in: 5...480, step: 5) {
-          Text(durationLabel)
+        Stepper(value: timerDurationBinding, in: 15...480, step: 5) {
+          Text("default \(durationLabel), asked each start")
             .font(.system(size: 13))
             .foregroundStyle(theme.textSecondary)
         }
@@ -300,7 +306,6 @@ struct LoqinProfileCreationView: View {
   }
 
   private func save() {
-    draft.commitTimerDurationAsStoredSetting()
     do {
       _ = try draft.save(existingProfile: nil, in: context)
       dismiss()
@@ -310,7 +315,6 @@ struct LoqinProfileCreationView: View {
   }
 
   private func openAdvanced() {
-    draft.commitTimerDurationAsStoredSetting()
     do {
       createdProfile = try draft.save(existingProfile: nil, in: context)
     } catch {

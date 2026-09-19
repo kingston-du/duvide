@@ -170,12 +170,19 @@ struct LoqinProfileEditorView: View {
       .foregroundStyle(.primary)
       .editorRow()
 
+      // "default", not "duration": a timer profile asks for its length every time it starts, so
+      // this sets the value that prompt opens on — it does not decide how long the session runs.
       if draft.selectedStrategy?.hasTimer == true {
         Button {
           showingTimerSettings = true
         } label: {
           HStack {
-            Text("duration")
+            VStack(alignment: .leading, spacing: 2) {
+              Text("default duration")
+              Text("asked again each start")
+                .font(.caption)
+                .foregroundStyle(AuraTheme.textSecondary)
+            }
             Spacer()
             Text(durationLabel)
               .foregroundStyle(AuraTheme.textSecondary)
@@ -407,7 +414,6 @@ struct LoqinProfileEditorView: View {
   }
 
   private func save() {
-    draft.commitTimerDurationAsStoredSetting()
     do {
       _ = try draft.save(existingProfile: profile, in: context)
       dismiss()
