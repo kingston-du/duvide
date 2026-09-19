@@ -1,6 +1,19 @@
 import SwiftUI
 
 struct TimerDurationView: View {
+  /// Detents for a sheet hosting this view, sized so the whole thing — through the stop-button
+  /// toggle — is on screen when it opens.
+  ///
+  /// The old `[.medium, .large]` was the root of two separate complaints: `.medium` is about
+  /// 426pt on a modern iPhone and this content needs roughly 520pt, so the header was squeezed
+  /// against the grabber and the toggle sat below the fold, reading as hidden behind the confirm
+  /// button. The body scrolls, so an undersized detent degrades to scrolling rather than clipping
+  /// — which is what keeps these numbers safe under large Dynamic Type — but the point is that
+  /// scrolling shouldn't be needed to discover a control in the default state.
+  static func sheetDetents(showsDisableStopButton: Bool = true) -> Set<PresentationDetent> {
+    [.height(showsDisableStopButton ? 540 : 460), .large]
+  }
+
   @EnvironmentObject var themeManager: ThemeManager
   @Environment(\.dismiss) private var dismiss
 

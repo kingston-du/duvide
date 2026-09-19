@@ -14,6 +14,8 @@ class NFCTimerBlockingStrategy: BlockingStrategy {
   var usesNFC: Bool = true
   var hasTimer: Bool = true
   var entryGesture: BlockingStrategyEntryGesture = .timer
+  // Tall enough for the whole duration sheet; `.medium` cut off its stop-button toggle.
+  var startViewPresentationDetents: Set<PresentationDetent> = TimerDurationView.sheetDetents()
 
   var onSessionCreation: ((SessionStatus) -> Void)?
   var onErrorMessage: ((String) -> Void)?

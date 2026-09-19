@@ -94,7 +94,7 @@ struct LoqinProfileEditorView: View {
         ) { configuration in
           draft.strategyData = StrategyTimerData.toData(from: configuration)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents(TimerDurationView.sheetDetents(showsDisableStopButton: false))
       }
       .alert(
         "couldn't save profile",
