@@ -229,10 +229,14 @@ struct TimerDurationView: View {
           .font(.body)
           .fontWeight(.medium)
 
+        // Wraps rather than truncating. The single-line cap dates from when this sheet's content
+        // had to fit a fixed detent it was already overflowing; now that it scrolls, clipping the
+        // caption to "…during tim…" buys nothing and costs the one sentence explaining what the
+        // toggle does.
         Text("Prevent early stopping during timer sessions")
           .font(.caption)
           .foregroundColor(.secondary)
-          .lineLimit(1)
+          .fixedSize(horizontal: false, vertical: true)
       }
 
       Spacer()
