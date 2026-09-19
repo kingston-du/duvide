@@ -39,32 +39,49 @@ struct TimerDurationView: View {
     _hideStopButton = State(initialValue: initialConfiguration.hideStopButton)
   }
 
+  /// Scrolls, with the confirm button pinned below it.
+  ///
+  /// This used to be one plain `VStack`, which looked fine until you measured it: at the `.medium`
+  /// detent its hosts present it in, the content is taller than the sheet. The overflow came off
+  /// the top, so the header's declared padding never rendered and "Timer Settings" ended up
+  /// touching the sheet's grabber. Adding more padding to that layout would only have pushed more
+  /// of it out. Letting the content scroll is what makes the top margin real, and keeping the
+  /// button outside the scroll view is what stops "Set Duration" from falling below the fold once
+  /// it can.
   var body: some View {
-    VStack(spacing: 32) {
-      // Header
-      VStack(alignment: .leading, spacing: 12) {
-        Text("Timer Settings")
-          .font(.title2).bold()
+    VStack(spacing: 0) {
+      ScrollView {
+        VStack(spacing: 32) {
+          // Header
+          VStack(alignment: .leading, spacing: 12) {
+            Text("Timer Settings")
+              .font(.title2).bold()
 
-        Text(
-          "Select how long you want \(profileName) to last."
-        )
-        .font(.callout)
-        .foregroundColor(.secondary)
+            Text(
+              "Select how long you want \(profileName) to last."
+            )
+            .font(.callout)
+            .foregroundColor(.secondary)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+
+          // Large time display
+          timeDisplay
+
+          // Slider with +/- buttons
+          sliderControls
+
+          // Hide stop button toggle
+          if showsDisableStopButton {
+            hideStopButtonToggle
+          }
+        }
+        .padding(.horizontal, 24)
+        // Clears the sheet's grabber with room to spare, rather than sitting under it.
+        .padding(.top, 32)
+        .padding(.bottom, 24)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.top, 16)
-
-      // Large time display
-      timeDisplay
-
-      // Slider with +/- buttons
-      sliderControls
-
-      // Hide stop button toggle
-      if showsDisableStopButton {
-        hideStopButtonToggle
-      }
+      .scrollBounceBehavior(.basedOnSize)
 
       // Confirm button
       ActionButton(
@@ -74,8 +91,9 @@ struct TimerDurationView: View {
       ) {
         handleConfirm()
       }
+      .padding(.horizontal, 24)
+      .padding(.bottom, 24)
     }
-    .padding(24)
   }
 
   private var timeDisplay: some View {
