@@ -383,9 +383,12 @@ enum LoqinTheme: String, CaseIterable, Codable, Identifiable {
           .opacity(0.12 + 0.88 * t)
       } else {
         let fade = min(max((t - 0.4) / 0.6, 0), 1)
+        // Typed explicitly: left to inference, `1 - …` inside `.opacity` matches both the Double
+        // and the CGFloat operator and fails to build as ambiguous.
+        let homeOpacity: Double = 1 - 0.88 * Double(fade)
         content
           .ignoresSafeArea()
-          .opacity(1 - 0.88 * fade)
+          .opacity(homeOpacity)
       }
     case .blueHour:
       let phase = smoothPhase(t)
@@ -771,6 +774,7 @@ private struct HorizonWorld: View {
   private func sun(accent: Color, in size: CGSize) -> some View {
     let horizonY = size.height * 0.64
     let descent = size.height * 0.75
+    let sunOpacity: Double = 1 - min(Double(progress) * 1.4, 1)
     return Circle()
       .fill(
         RadialGradient(
@@ -787,7 +791,7 @@ private struct HorizonWorld: View {
         x: size.width / 2 + (breathing ? 2 : -2),
         y: horizonY + progress * descent
       )
-      .opacity(1 - min(progress * 1.4, 1))
+      .opacity(sunOpacity)
       .allowsHitTesting(false)
   }
 
