@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 /// First run: request Screen Time access, confirm it landed, then hand off straight into the real
@@ -7,15 +6,25 @@ import SwiftUI
 /// ending strategy on the user's behalf. Shares the creation flow's scaffold (progress dots, back
 /// chevron, plain-text forward action) so first run reads as the front of one flow rather than a
 /// generic screen bolted onto it.
+///
+/// The creation flow is hosted inline, as this view's last step, rather than in a cover of its
+/// own. First run used to stack two full-screen covers — onboarding, and creation inside it — and
+/// saving the profile dismissed both at once from three places: creation dismissed itself,
+/// onboarding dismissed itself on seeing that, and the home screen flipped its own binding the
+/// moment the new profile reached its query. "advanced" was worse, presenting the editor sheet in
+/// the same instant its presenters were being torn down. Overlapping dismissals like that are a
+/// known way to leave UIKit with a stale presentation layer over the window — a screen frozen on
+/// the last frame of the home surface, while touches either die or reach the live layer beneath
+/// it, where a hold can start a session the user never sees. One presentation, ended in one place
+/// (`onFinished`, owned by the home screen), cannot race itself.
 struct LoqinOnboardingView: View {
-  @Environment(\.dismiss) private var dismiss
   @Environment(\.openURL) private var openURL
   @EnvironmentObject private var requestAuthorizer: RequestAuthorizer
 
-  @Query private var profiles: [BlockedProfiles]
+  /// Called exactly once, after the first profile has been saved. The presenter ends first run.
+  let onFinished: () -> Void
 
   @State private var step: Step = .permission
-  @State private var showingProfileCreation = false
   @State private var showSettingsHint = false
   /// True from the tap until Apple's (two-stage, slow) Screen Time prompt actually resolves, so
   /// the button can hold a visible waiting state instead of looking inert while the system sheet
@@ -25,9 +34,37 @@ struct LoqinOnboardingView: View {
   private enum Step: Int {
     case permission
     case ready
+    case creating
   }
 
   var body: some View {
+    ZStack {
+      if step == .creating {
+        LoqinProfileCreationView(
+          onFinished: onFinished,
+          onBackOut: { withAnimation(LoqinMotion.enter) { step = .ready } }
+        )
+        .transition(.opacity)
+      } else {
+        introduction
+          .transition(.opacity)
+      }
+    }
+    .interactiveDismissDisabled()
+    .onAppear {
+      requestAuthorizer.refreshAuthorizationStatus()
+      if requestAuthorizer.isAuthorized {
+        step = .ready
+      }
+    }
+    .onChange(of: requestAuthorizer.isAuthorized) { _, authorized in
+      if authorized, step == .permission {
+        withAnimation(LoqinMotion.enter) { step = .ready }
+      }
+    }
+  }
+
+  private var introduction: some View {
     ZStack {
       AuraBackground(state: .free)
 
@@ -44,33 +81,11 @@ struct LoqinOnboardingView: View {
       ) {
         switch step {
         case .permission: permissionStep
-        case .ready: readyStep
+        case .ready, .creating: readyStep
         }
       }
     }
     .preferredColorScheme(.dark)
-    .interactiveDismissDisabled()
-    .fullScreenCover(isPresented: $showingProfileCreation) {
-      LoqinProfileCreationView()
-    }
-    .onChange(of: showingProfileCreation) { wasShowing, isShowing in
-      // The creation flow saved a profile (rather than being backed out of) once one exists;
-      // onboarding's whole job is done at that point.
-      if wasShowing, !isShowing, !profiles.isEmpty {
-        dismiss()
-      }
-    }
-    .onAppear {
-      requestAuthorizer.refreshAuthorizationStatus()
-      if requestAuthorizer.isAuthorized {
-        step = .ready
-      }
-    }
-    .onChange(of: requestAuthorizer.isAuthorized) { _, authorized in
-      if authorized {
-        withAnimation(LoqinMotion.enter) { step = .ready }
-      }
-    }
   }
 
   private var permissionStep: some View {
@@ -183,6 +198,6 @@ struct LoqinOnboardingView: View {
 
   private func advance() {
     guard step == .ready else { return }
-    showingProfileCreation = true
+    withAnimation(LoqinMotion.enter) { step = .creating }
   }
 }

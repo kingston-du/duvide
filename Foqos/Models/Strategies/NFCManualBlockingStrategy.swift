@@ -71,6 +71,7 @@ class NFCManualBlockingStrategy: BlockingStrategy {
       self.onSessionCreation?(.ended(session.blockedProfile))
     }
 
+    nfcScanner.onError = { message in self.onErrorMessage?(message) }
     nfcScanner.scan(profileName: session.blockedProfile.name, verb: "exit")
 
     return nil

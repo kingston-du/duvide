@@ -105,6 +105,7 @@ final class NFCSoftUnblockBlockingStrategy: BlockingStrategy {
       self.endSession(context: context, session: session)
     }
 
+    nfcScanner.onError = { message in self.onErrorMessage?(message) }
     nfcScanner.scan(profileName: session.blockedProfile.name, verb: "exit")
     return nil
   }

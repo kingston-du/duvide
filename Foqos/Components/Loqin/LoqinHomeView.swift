@@ -90,6 +90,13 @@ struct LoqinHomeView: View {
     showMenu || showMore
   }
 
+  /// Whether the home surface is the thing actually in front of the user. Anything covering it —
+  /// first run, a utility screen, a menu, the strategy's own sheet — means a touch that reaches
+  /// the enter gesture got there by accident.
+  private var isHomeUncovered: Bool {
+    !showOnboarding && activeSheet == nil && !menuOpen && !strategyManager.showCustomStrategyView
+  }
+
   /// True once a countdown session is far enough past its expected end that the engine should be
   /// re-read. A timer session is ended by the device-activity extension, out of process — the
   /// shields come off and the shared session closes without anything notifying this view. Nothing
@@ -207,15 +214,19 @@ struct LoqinHomeView: View {
         presentationDetents: strategyManager.customStrategyViewPresentationDetents
       )
     }
-    .fullScreenCover(isPresented: $showOnboarding) {
-      LoqinOnboardingView()
+    // First run ends in exactly one place: `onFinished`, once the first profile is saved. The
+    // enter gesture re-arms from `onDismiss`, which runs only once the cover has fully gone.
+    .fullScreenCover(isPresented: $showOnboarding, onDismiss: { armEnter() }) {
+      LoqinOnboardingView(onFinished: { showOnboarding = false })
     }
     .onReceive(strategyManager.$errorMessage) { errorMessage in
       guard let message = errorMessage else { return }
       scanErrorMessage = message
       showingScanError = true
     }
-    .alert("Can't Unlock", isPresented: $showingScanError) {
+    // Neutral title: this also reports NFC being unavailable and shortcut failures, not only a
+    // wrong tag.
+    .alert("Something's Not Right", isPresented: $showingScanError) {
       Button("OK", role: .cancel) {
         strategyManager.errorMessage = nil
       }
@@ -227,6 +238,7 @@ struct LoqinHomeView: View {
         selectedProfileID = profiles.first?.id
       }
       strategyManager.loadActiveSession(context: context)
+      strategyManager.releaseOrphanedRestrictions(context: context)
       // Schedule activities registered for a profile that no longer has a schedule (or no longer
       // exists) keep firing on their own. Nothing else calls this any more, so without it here
       // they accumulate and start sessions the user removed.
@@ -241,18 +253,26 @@ struct LoqinHomeView: View {
       armEnter()
     }
     .onChange(of: showOnboarding) { _, showing in
-      // First run ends here. Re-arm only once onboarding is fully gone, so the tap that finished
-      // profile creation cannot be the tap that starts a session on it.
+      // Re-arming waits for the cover's `onDismiss`, so the tap that finished profile creation
+      // cannot be the tap that starts a session on it. The delayed arm here is only a backstop in
+      // case that callback never arrives; `armEnter` itself refuses while anything still covers.
       if showing {
-        isEnterArmed = false
-        enterArmWorkItem?.cancel()
-        enterArmWorkItem = nil
+        disarmEnter()
       } else {
-        armEnter()
+        armEnter(after: 1.2)
       }
     }
     .onChange(of: activeSheet) { _, sheet in
       if sheet == nil { armEnter() }
+    }
+    // The other two things `isHomeUncovered` watches. An arm that came due while either was up
+    // was refused, so closing them has to be able to arm again — but only then: re-arming when
+    // already armed would needlessly deafen the surface for the next half second.
+    .onChange(of: menuOpen) { _, open in
+      if !open { armEnterIfIdle() }
+    }
+    .onChange(of: strategyManager.showCustomStrategyView) { _, showing in
+      if !showing { armEnterIfIdle() }
     }
     .onChange(of: scenePhase) { _, phase in
       guard phase == .active else { return }
@@ -263,6 +283,7 @@ struct LoqinHomeView: View {
       // already does, and it is what lets a surface left inconsistent repair itself without the
       // user having to force-quit the app.
       strategyManager.loadActiveSession(context: context)
+      strategyManager.releaseOrphanedRestrictions(context: context)
       syncLockedSurface()
     }
     .onChange(of: isCountdownReloadDue, initial: true) { _, shouldReload in
@@ -275,7 +296,12 @@ struct LoqinHomeView: View {
       if selectedProfileID == nil || !profiles.contains(where: { $0.id == selectedProfileID }) {
         selectedProfileID = profiles.first?.id
       }
-      showOnboarding = profiles.isEmpty
+      // Only ever *raises* first run. Lowering it belongs to onboarding's `onFinished` alone: this
+      // fires the instant the first profile is inserted, while onboarding is still on screen and
+      // possibly presenting the "advanced" editor, and dismissing from here as well raced those.
+      if profiles.isEmpty {
+        showOnboarding = true
+      }
     }
     // Tag-to-toggle. A background NFC scan or a QR code opens
     // `https://foqos.app/profile/<id>`, which `foqosApp.onOpenURL` hands to the navigation
@@ -313,6 +339,14 @@ struct LoqinHomeView: View {
       isPressing = false
 
       if blocking {
+        // A session can only have been started deliberately from an uncovered home screen, but
+        // one arriving from anywhere (a tag, a shortcut, a schedule) must win over first run and
+        // the utility screens — otherwise it runs underneath them, out of sight.
+        if showOnboarding, !profiles.isEmpty {
+          showOnboarding = false
+        }
+        closeMenus()
+        activeSheet = nil
         isExiting = false
         lockedProfile = strategyManager.activeSession?.blockedProfile
         reveal = 0
@@ -526,21 +560,36 @@ struct LoqinHomeView: View {
 
   /// Re-arms the enter gesture a beat after whatever was covering the home surface has gone. The
   /// delay only has to outlast the dismissal itself; a user who means to enter taps well after it.
+  ///
+  /// Checked again when the delay runs out, not only when it is scheduled: a foreground or a
+  /// closing menu can ask to arm while first run or a utility screen is still up, and arming then
+  /// would leave the gesture live the moment that cover starts to go.
   private func armEnter(after delay: TimeInterval = 0.5) {
-    enterArmWorkItem?.cancel()
-    isEnterArmed = false
+    disarmEnter()
     let item = DispatchWorkItem {
-      isEnterArmed = true
       enterArmWorkItem = nil
+      guard isHomeUncovered else { return }
+      isEnterArmed = true
     }
     enterArmWorkItem = item
     DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
   }
 
+  private func armEnterIfIdle() {
+    guard !isEnterArmed, enterArmWorkItem == nil else { return }
+    armEnter()
+  }
+
+  private func disarmEnter() {
+    enterArmWorkItem?.cancel()
+    enterArmWorkItem = nil
+    isEnterArmed = false
+  }
+
   private func start() {
     // Both entry gestures land here — the tap path directly, the hold path through its work item —
     // so this one guard covers both.
-    guard isEnterArmed else { return }
+    guard isEnterArmed, isHomeUncovered else { return }
     guard let profile = selectedProfile, !strategyManager.isBlocking else { return }
     if theme == .aura {
       withAnimation(.easeOut(duration: 0.32)) {

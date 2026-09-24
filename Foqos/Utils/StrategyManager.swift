@@ -901,6 +901,38 @@ class StrategyManager: ObservableObject {
     }
   }
 
+  /// Lifts a shield that no session owns.
+  ///
+  /// The shield lives in the ManagedSettingsStore and the session in SwiftData, and nothing makes
+  /// the two move together — a crash or force quit between them, a session row lost to a delete,
+  /// or a UI that never showed the session it started can each leave the phone blocked while the
+  /// app reports nothing running. From there the user has no ✕ to reach and no stop to press; the
+  /// only way out they can find is deleting the app. Every legitimate shield (manual, NFC, timer,
+  /// schedule, break, soft unblock) is written after its session exists in SwiftData or in the
+  /// App Group mirror, so a shield with neither behind it is always an orphan.
+  ///
+  /// Called on appear and on foreground, after `loadActiveSession` has synced the mirror in.
+  @discardableResult
+  func releaseOrphanedRestrictions(context: ModelContext) -> Bool {
+    guard !isBlocking,
+      getActiveSession(context: context) == nil,
+      SharedData.getActiveSharedSession() == nil,
+      appBlocker.hasActiveRestrictions
+    else {
+      return false
+    }
+
+    print("Found restrictions with no session behind them, releasing...")
+    appBlocker.deactivateRestrictions()
+    SoftUnblockGrantScheduler.stopAll()
+    SoftUnblockGrantStore.clearAll()
+    DeviceActivityCenterUtil.removeAllBreakTimerActivities()
+    DeviceActivityCenterUtil.removeAllStrategyTimerActivities()
+    DeviceActivityCenterUtil.removeAllPauseTimerActivities()
+    WidgetCenter.shared.reloadTimelines(ofKind: "ProfileControlWidget")
+    return true
+  }
+
   func resetBlockingState(context: ModelContext) {
     guard !isBlocking else {
       print("Cannot reset blocking state while a profile is active")
