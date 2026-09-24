@@ -118,8 +118,10 @@ class NFCPauseTimerBlockingStrategy: BlockingStrategy {
     }
 
     if isPauseActive {
+      nfcScanner.onError = { message in self.onErrorMessage?(message) }
       nfcScanner.scan(profileName: session.blockedProfile.name, verb: "exit")
     } else {
+      nfcScanner.onError = { message in self.onErrorMessage?(message) }
       nfcScanner.scan(profileName: session.blockedProfile.name, verb: "pause")
     }
 

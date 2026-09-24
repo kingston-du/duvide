@@ -95,6 +95,19 @@ class AppBlockerUtil {
     store.application.denyAppInstallation = profile.enableBlockAppInstallation
   }
 
+  /// Whether this store is currently enforcing anything. The store is system state that outlives
+  /// the process and the app's own session rows, so this is the only way to tell "the phone is
+  /// blocked" apart from "the app thinks a session is running".
+  var hasActiveRestrictions: Bool {
+    store.shield.applications != nil
+      || store.shield.applicationCategories != nil
+      || store.shield.webDomains != nil
+      || store.shield.webDomainCategories != nil
+      || store.webContent.blockedByFilter != nil
+      || store.application.denyAppRemoval == true
+      || store.application.denyAppInstallation == true
+  }
+
   func deactivateRestrictions() {
     print("Stoping restrictions...")
 

@@ -60,6 +60,19 @@ extension NFCScannerUtil: NFCTagReaderSessionDelegate {
   }
 
   func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+    // Every session ends here, including the successful ones: `handleTagData` invalidates the
+    // session itself, which reports as a user cancel. Only a real failure is worth surfacing.
+    if let readerError = error as? NFCReaderError {
+      switch readerError.code {
+      case .readerSessionInvalidationErrorUserCanceled,
+        .readerSessionInvalidationErrorSessionTimeout,
+        .readerSessionInvalidationErrorFirstNDEFTagRead:
+        return
+      default:
+        break
+      }
+    }
+
     DispatchQueue.main.async {
       self.onError?(error.localizedDescription)
     }

@@ -7,9 +7,18 @@ import SwiftUI
 /// tags, notifications, emergency unblock) lives behind "advanced" on the last step, which saves
 /// what's been chosen so far and opens the existing `LoqinProfileEditorView` to refine it — same
 /// plumbing, same validation, just reached differently.
+///
+/// Presented on its own from the profiles list, where it dismisses itself. First run hosts it
+/// inline instead and passes `onFinished`/`onBackOut`, so the flow ends by handing control back
+/// rather than by dismissing a presentation of its own.
 struct LoqinProfileCreationView: View {
   @Environment(\.modelContext) private var context
   @Environment(\.dismiss) private var dismiss
+
+  /// Called once the profile exists and the flow is over. Defaults to dismissing this view.
+  var onFinished: (() -> Void)?
+  /// Called when back is pressed on the first step. Defaults to dismissing this view.
+  var onBackOut: (() -> Void)?
 
   @StateObject private var draft = BlockedProfileDraft()
   @State private var step: Step = .name
@@ -17,6 +26,10 @@ struct LoqinProfileCreationView: View {
   @State private var showingActivityPicker = false
   @State private var errorMessage: String?
   @State private var createdProfile: BlockedProfiles?
+  /// Set by the first successful save. "create" and "advanced" are both live until the flow is
+  /// gone, and each tap on either inserts a profile, so a second tap during the exit — the
+  /// natural response on a device that is slow to animate it — used to create a duplicate.
+  @State private var hasSaved = false
   @FocusState private var nameFocused: Bool
 
   private enum Step: Int, CaseIterable {
@@ -60,15 +73,12 @@ struct LoqinProfileCreationView: View {
     } message: {
       Text(errorMessage ?? "An unknown error occurred.")
     }
-    .sheet(item: $createdProfile) { profile in
+    // The "advanced" editor was opened on the freshly created profile; once it's gone the profile
+    // already exists, so the creation flow itself is done. `onDismiss` rather than an `onChange`
+    // on `createdProfile`: the binding clears when the sheet *starts* to leave, and ending this
+    // flow then tears down its presenter while the sheet is still mid-dismissal.
+    .sheet(item: $createdProfile, onDismiss: finish) { profile in
       LoqinProfileEditorView(profile: profile)
-    }
-    .onChange(of: createdProfile) { oldValue, newValue in
-      // The "advanced" editor was opened on the freshly created profile; once it's dismissed the
-      // profile already exists, so the creation flow itself is done.
-      if oldValue != nil, newValue == nil {
-        dismiss()
-      }
     }
     .onAppear { nameFocused = true }
   }
@@ -290,6 +300,8 @@ struct LoqinProfileCreationView: View {
   private func back() {
     if let previous = step.previous {
       withAnimation(LoqinMotion.enter) { step = previous }
+    } else if let onBackOut {
+      onBackOut()
     } else {
       dismiss()
     }
@@ -306,19 +318,31 @@ struct LoqinProfileCreationView: View {
   }
 
   private func save() {
+    guard !hasSaved else { return }
     do {
       _ = try draft.save(existingProfile: nil, in: context)
-      dismiss()
+      hasSaved = true
+      finish()
     } catch {
       errorMessage = error.localizedDescription
     }
   }
 
   private func openAdvanced() {
+    guard !hasSaved else { return }
     do {
       createdProfile = try draft.save(existingProfile: nil, in: context)
+      hasSaved = true
     } catch {
       errorMessage = error.localizedDescription
+    }
+  }
+
+  private func finish() {
+    if let onFinished {
+      onFinished()
+    } else {
+      dismiss()
     }
   }
 }
