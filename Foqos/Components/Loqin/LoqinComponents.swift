@@ -107,7 +107,11 @@ struct LoqinFilledPillButtonStyle: ButtonStyle {
         Capsule()
           .strokeBorder(Color.white.opacity(engaged ? 0.34 : 0.14), lineWidth: 1)
       )
-      .shadow(color: accent.opacity(engaged ? 0.16 : 0.42), radius: engaged ? 8 : 20, y: engaged ? 2 : 8)
+      .shadow(
+        color: accent.opacity(engaged ? 0.16 : 0.42),
+        radius: engaged ? 8 : 20,
+        y: engaged ? 2 : 8
+      )
       .scaleEffect(engaged ? 0.97 : 1)
       .contentShape(Capsule())
       .animation(LoqinMotion.tap, value: configuration.isPressed)
